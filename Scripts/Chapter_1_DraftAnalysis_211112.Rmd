@@ -1,0 +1,390 @@
+---
+title: "Chapter_1_DraftAnalysis_211112"
+author: "Wade VanderWright"
+date: "12/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_knit$set(root.dir = '~/Desktop/Dulvy Lab/Thesis/Chapter 1 - GSH & Activity Level')
+```
+
+## Set up
+```{r}
+##Load Packages
+library(ape)
+library(phytools)
+library(nlme)
+library(tidyverse)
+library(geiger)
+#library(caper)
+library(xlsx)
+library(here)
+library(readxl)
+library(brms)
+
+library(rstan)
+library(gdata)
+library(bayesplot)
+
+
+##Preload functions
+# 'Not in' function
+'%nin%' <- Negate('%in%')
+
+# Caudal fin aspect ratio function
+caudal_fin <- function(height, area) {
+  aspect_ratio <- (height^2 / area)
+  return(aspect_ratio)
+}
+
+#Centering data function
+center_scale <- function(x, y){
+  scale(x, center = y, scale = FALSE)
+}
+
+#Run this and skip to line 348
+load(here('./Data/Output/CurrentDataState.RData'))
+
+
+```
+
+##Load & Clean Data 
+```{r}
+getwd()
+
+#load last workspace
+#
+
+# GSH Data ####
+GSH_df <- read.csv(here('Data', 'Input', 'SharkGillSlitActivity210331 - Sheet1.csv'), header = T)
+#drop NAs
+GSH_df <- GSH_df %>% drop_na(GS1_proportionTL)
+#create binomial
+GSH_df <- GSH_df %>% 
+  rowwise() %>% 
+  mutate(Binomial = paste(Genus, Species, sep = '_'))
+#force as character
+GSH_df$Binomial <- as.character(GSH_df$Binomial)
+#arrange by binomial
+GSH_df <- GSH_df %>% 
+  arrange(Binomial)
+#Calculate the mean GSH per species
+GSH_df <- GSH_df %>% 
+  rowwise() %>% 
+  mutate("MeanGSH" = mean(c(GS1_proportionTL, GS2_proportionTL, GS3_proportionTL, GS4_proportionTL, GS5_proportionTL, GS6_proportionTL, GS7_proportionTL), na.rm = TRUE))
+#create Caudal fin aspect ratios and Log10 columns for desired variables 
+GSH_df <- GSH_df %>%
+  rowwise() %>% 
+  mutate("CaudalAspect_proportion_TL" = caudal_fin(TailHeight_proportionTL, TailArea_proportionTL)) %>% 
+  mutate(Log10MeanGSH = log10(MeanGSH)) %>% 
+  mutate(Log10CFAR = log10(CaudalAspect_proportion_TL))
+#update taxonomy to match
+GSH_df[(GSH_df$Binomial == 'Deania_quadrispinosum'), 'Binomial'] <- 'Deania_quadrispinosa'
+GSH_df[(GSH_df$Binomial == 'Ctenacis_fehlmani'), 'Binomial'] <- 'Ctenacis_fehlmanni' 
+GSH_df[(GSH_df$Binomial == 'Hemitriakis_leucoperitera'), 'Binomial'] <- 'Hemitriakis_leucoperiptera'
+GSH_df[(GSH_df$Binomial == 'Lamiopsis_temmincki'), 'Binomial'] <- 'Lamiopsis_temminckii'
+GSH_df[(GSH_df$Binomial == 'Carcharhinus_perezi'), 'Binomial'] <- 'Carcharhinus_perezii'
+GSH_df[(GSH_df$Binomial == 'Chiloscyllium_hasselti'), 'Binomial'] <- 'Chiloscyllium_hasseltii'
+
+
+# Depth and habitat Data####
+#load data
+Habitat <- read_excel(here('./Data/Input/Habitat_species_corrected_210512.xlsx'), sheet = "Current")
+#update taxonomy to match
+Habitat[(Habitat$Genus_species == 'Carcharhinus_perezi'), 'Genus_species'] <- 'Carcharhinus_perezii'
+Habitat[(Habitat$Genus_species == 'Chiloscyllium_hasselti'), 'Genus_species'] <- 'Chiloscyllium_hasseltii'
+#filter to match species
+Habitat <- Habitat %>% 
+  filter(Genus_species %in% GSH_df$Binomial)
+#arrange by binomial
+Habitat <- Habitat %>% 
+  arrange(Genus_species)
+#save missing species for later
+missing.habitat <- GSH_df[(GSH_df$Binomial %nin% Habitat$Genus_species),]
+#trim unused columns from habitat sheet
+Habitat <- Habitat[,c(10,22,23,29,33,34)]
+#join dataframes
+GSH_df <- left_join(GSH_df, Habitat, by = c('Binomial' = 'Genus_species'))
+GSH_df$MaxLinearDimension <- as.numeric(GSH_df$MaxLinearDimension)
+#Log the maximum size column
+GSH_df <- GSH_df %>% 
+  rowwise() %>% 
+  mutate(Log10MaxSize = log10(MaxLinearDimension))
+#center the Log10 Mean GSH column
+y <- mean(GSH_df$Log10MeanGSH)
+GSH_df$Log10MeanGSH_centered <- center_scale(GSH_df$Log10MeanGSH, y)
+
+
+
+
+###Phylo Data####
+#read in the 10000 trees
+FullTree <- read.nexus(here('./Data/Input/10.cal.tree.nex'))
+#se the seed for reproduciblility
+set.seed(11)
+#sample out a tree
+SampleTree <- sample(FullTree, 1)
+SampleTree <- SampleTree$UNTITLED
+#check if tips are binary
+is.binary(SampleTree)
+#check where the tree and dataset differ
+namedrops <- name.check(SampleTree, GSH_df, GSH_df$Binomial)
+#drop the tips that are in the tree and not in the data (all the rays)
+SampleTree <- drop.tip(SampleTree, namedrops$tree_not_data)
+#drop the species in the dataset that are not in the tree
+GSH_df_pgls <- subset(GSH_df, GSH_df$Binomial %nin% namedrops$data_not_tree) 
+
+#center the Log10 Max Size column
+z <- mean(GSH_df_pgls$Log10MaxSize)
+GSH_df_pgls$Log10MaxSize_centered <- center_scale(GSH_df_pgls$Log10MaxSize, z)
+GSH_df_pgls$Log10MaxSize_centered <- as.numeric(GSH_df_pgls$Log10MaxSize_centered)
+
+#covariance matrix?
+A <- ape::vcv.phylo(SampleTree)
+
+
+```
+
+## Plot the Tree
+```{r}
+plot(SampleTree, type = 'fan', show.tip=F, edge.color = rainbow(1200))
+```
+
+## pgls without brms or multiple levels
+Fixed the 'form' argument to match the tree to the data frame structure. The default 'form = ~1' just takes the speicies as they appear in the data frame. Now the slope estimate matches the brms model (with tree) but the lambda is still ~0.7.
+https://stackoverflow.com/questions/63138372/error-running-pgls-in-ape-no-covariate-specified
+
+```{r}
+pglsMod1 <- gls(Log10CFAR ~ Log10MeanGSH_centered, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+
+summary(pglsMod1)
+
+```
+
+```{r}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls)
+abline(a = coef(pglsMod1)[1], b = coef(pglsMod1)[2])
+```
+
+
+## BRMS no tree , no interaction with body size
+```{r}
+Plain_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered,
+                    data = GSH_df_pgls,
+                    family = gaussian())
+
+
+Model_plain <- brm(Log10CFAR ~ Log10MeanGSH_centered,
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    #data2 = list(A = A), #don't need for this model
+                    prior = Plain_prior
+                    )
+
+summary(Model_plain)
+```
+
+```{r}
+plot(conditional_effects(Model_plain), points = TRUE)
+
+```
+
+## BRMS no tree, with interaction with body size
+```{r}
+Size_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered,
+                    data = GSH_df_pgls,
+                    family = gaussian())
+
+Model_size <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered,
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    #data2 = list(A = A), #don't need for this model
+                    prior = Size_prior
+                    )
+
+summary(Model_size)
+
+```
+
+
+```{r}
+plot(conditional_effects(Model_size), points = TRUE) #hit enter in the console
+
+
+
+```
+
+## BRMS no tree, with body size as additional predictor (no interaction)
+```{r}
+Size_prior_2 <- get_prior(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered,
+                    data = GSH_df_pgls,
+                    family = gaussian())
+
+Model_size_2 <- brm(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered,
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    #data2 = list(A = A), #don't need for this model
+                    prior = Size_prior_2)
+
+summary(Model_size_2)
+```
+
+```{r}
+plot(conditional_effects(Model_size_2), points = TRUE) #hit enter in the console
+
+
+
+```
+
+## BRMS no tree, with body size as additional predictor (intercept only)
+```{r}
+#Size_prior_3 <- get_prior(Log10CFAR ~ Log10MeanGSH_centered + (1|Log10MaxSize_centered),
+#                    data = GSH_df_pgls,
+#                    family = gaussian())
+#
+#Model_size_3 <- brm(Log10CFAR ~ Log10MeanGSH_centered + (1|Log10MaxSize_centered),
+#                    data = GSH_df_pgls,
+#                    family = gaussian(),
+#                    #data2 = list(A = A), #don't need for this model
+#                    prior = Size_prior_3,
+#                    control = list(adapt_delta = 0.9))
+#
+#summary(Model_size_3)
+```
+
+```{r}
+#plot(conditional_effects(Model_size_3), points = TRUE) #hit enter in the console
+
+
+
+```
+
+## BRMS with tree, no interation with body size
+```{r}
+Simple_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered + (1|gr(Binomial, cov = A)),
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    data2 = list(A = A))
+
+#run time was about 30 minutes
+Model_simple <- brm(Log10CFAR ~ Log10MeanGSH_centered + (1|gr(Binomial, cov = A)),
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    data2 = list(A = A),
+                    prior = Simple_prior,
+                    cores = 2)
+
+summary(Model_simple)
+
+#center the MeanGSH on mean value (close to a log or whole number)
+
+```
+
+
+```{r}
+plot(conditional_effects(Model_simple), points = TRUE)
+
+```
+
+```{r}
+plot(Model_simple, N=2, ask = F)
+```
+
+
+```{r}
+hyp <- "sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0"
+(hyp <- hypothesis(Model_simple, hyp, class = NULL))
+```
+
+```{r}
+plot(hyp)
+```
+
+
+## BRMS with tree AND interaction with body size
+```{r}
+BS_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered + (1|gr(Binomial, cov = A)),
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    data2 = list(A = A))
+
+Model_BS <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered + (1|gr(Binomial, cov = A)),
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    data2 = list(A = A),
+                    prior = BS_prior,
+                sample_prior = TRUE, chains = 4, cores = 2)
+
+summary(Model_BS)
+```
+
+
+```{r}
+plot(conditional_effects(Model_BS), points = TRUE) #hit enter in console
+
+```
+
+
+```{r}
+plot(Model_BS, N=2, ask = F)
+```
+
+```{r}
+hyp <- 'sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0'
+(hyp <- hypothesis(Model_BS, hyp, class = NULL))
+```
+```{r}
+plot(hyp)
+```
+
+### Save the environment
+```{r}
+save.image(here('./Data/Output/CurrentDataState.RData'))
+```
+
+
+## STAN model comparison
+```{r}
+##Data prep #add in priors from brms?
+
+y <- GSH_df_pgls$Log10CFAR
+x <- GSH_df_pgls$Log10MeanGSH
+z <- GSH_df_pgls$Log10MaxSize_centered 
+N <- length(GSH_df_pgls$Binomial)
+
+stan_data <- list(N = N, x = x, y = y, z = z)
+  
+## Stan Model 1 -- Log10CFAR ~ Log10MeanGSH_centered
+StanModel1 <- stan_model(file = here('Scripts', 'StanModel1.stan'))
+
+fit1 <- stan(file = './Scripts/StanModel1.stan', data = stan_data, warmup = 500, iter = 1000, chains = 4, cores = 2, thin = 1)
+  
+## Stan Model 2 -- Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered
+
+```
+```{r}
+fit1
+posterior <- extract(fit1)
+```
+
+```{r}
+summary(pglsMod1)
+```
+
+
+
+```{r}
+pglsMod2 <- gls(y ~ x, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+
+plot(y ~ x, pch = 20)
+abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 2, lty = 2, lw = 5)
+
+for (i in 1:500) {
+ abline(posterior$alpha[i], posterior$beta[i], col = "gray", lty = 1)
+}
+
+abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
+```
+
