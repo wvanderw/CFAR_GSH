@@ -1,3 +1,4 @@
 # CFAR_GSH
 version control for first chapter -- will be duplicated for publication 
-it is now 1045
+
+It is now 1142 and the mac won't sync :pizza:
