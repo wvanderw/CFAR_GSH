@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-knitr::opts_knit$set(root.dir = '~/Desktop/Dulvy Lab/Thesis/Chapter 1 - GSH & Activity Level')
+knitr::opts_knit$set(root.dir = '~/Desktop/Dulvy Lab/Thesis/Chapter 1 - GSH & Activity Level/CFAR_GSH')
 ```
 
 ## Set up
