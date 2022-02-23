@@ -7,11 +7,15 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-knitr::opts_knit$set(root.dir = '~/Desktop/Dulvy Lab/Thesis/Chapter 1 - GSH & Activity Level/CFAR_GSH')
+
 ```
 
 ## Set up
 ```{r}
+##Install packages
+#install.packages(c('ape','phytools','nlme','tidyverse','gieger','xlsx','here','readxl','brms','rstan','gdata','bayesplot','StanHeaders'))
+
+
 ##Load Packages
 library(ape)
 library(phytools)
@@ -19,9 +23,10 @@ library(nlme)
 library(tidyverse)
 library(geiger)
 #library(caper)
-library(xlsx)
+#library(xlsx)
 library(here)
 library(readxl)
+library(StanHeaders)
 library(brms)
 
 library(rstan)
@@ -339,10 +344,6 @@ hyp <- 'sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0'
 plot(hyp)
 ```
 
-### Save the environment
-```{r}
-save.image(here('./Data/Output/CurrentDataState.RData'))
-```
 
 
 ## STAN model comparison
@@ -359,7 +360,7 @@ stan_data <- list(N = N, x = x, y = y, z = z)
 ## Stan Model 1 -- Log10CFAR ~ Log10MeanGSH_centered
 StanModel1 <- stan_model(file = here('Scripts', 'StanModel1.stan'))
 
-fit1 <- stan(file = './Scripts/StanModel1.stan', data = stan_data, warmup = 500, iter = 1000, chains = 4, cores = 2, thin = 1)
+fit1 <- stan(file = './StanModel1.stan', data = stan_data, warmup = 500, iter = 1000, chains = 4, cores = 2, thin = 1)
   
 ## Stan Model 2 -- Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered
 
@@ -386,5 +387,9 @@ for (i in 1:500) {
 }
 
 abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
+```
+### Save the environment
+```{r}
+save.image(here('./Data/Output/CurrentDataState.RData'))
 ```
 
