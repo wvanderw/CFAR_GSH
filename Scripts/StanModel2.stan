@@ -1,20 +1,22 @@
 //
-// This Stan program defines 'Stan model 1 -- Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_Centered
+// This Stan program defines '## Stan Model 2 -- 
+// Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered
 //
 
 // The input data are vectors 'x' & 'y' of length 'N'.
 data {
-  int <lower=1> N;
-  vector[N] x;
-  vector[N] y;
-  vector[N] z;
+  int <lower=0> N; // number of data points
+  int <lower=0> K; // number of predictors (2 GSH and Size)
+  matrix[N,K] x; // predictor matrix
+  vector[N] y; // outcome (CFAR)
+ 
   
 }
 
 // The parameters accepted by the model. 
 parameters {
   real alpha;
-  real beta;
+  vector[K] beta;
   real<lower=0> sigma;
 }
 

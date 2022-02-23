@@ -362,9 +362,10 @@ StanModel1 <- stan_model(file = here('Scripts', 'StanModel1.stan'))
 
 fit1 <- stan(file = './StanModel1.stan', data = stan_data, warmup = 500, iter = 1000, chains = 4, cores = 2, thin = 1)
   
-## Stan Model 2 -- Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered
 
 ```
+
+
 ```{r}
 fit1
 posterior <- extract(fit1)
@@ -388,6 +389,55 @@ for (i in 1:500) {
 
 abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
 ```
+## STAN model comparison 2
+```{r}
+## Stan Model 2 -- Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered
+
+#data
+N <- length(GSH_df_pgls$Binomial)
+K <- 2
+y <- GSH_df_pgls$Log10CFAR
+x <- matrix(c(GSH_df_pgls$Log10MeanGSH, GSH_df_pgls$Log10MaxSize_centered), ncol = 2, byrow = F)
+
+stan_data2 <- list(N=N,K=K,y=y,x=x)
+
+#prior
+stan2_prior <- Size_prior
+
+## Stan Model 2 -- Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered
+StanModel2 <- stan_model(file = here('Scripts', 'StanModel2.stan'))
+
+fit2 <- stan(file = './StanModel2.stan', data = stan_data2, warmup = 500, iter = 1000, chains = 4, cores = 2, thin = 1)
+  
+
+```
+
+```{r}
+fit2
+posterior2 <- extract(fit2)
+```
+
+```{r}
+pglsMod2 <- gls(y ~ x, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+
+plot(y ~ x, pch = 20)
+
+
+for (i in 1:500) {
+ abline(posterior$alpha[i], posterior$beta[i], col = "gray", lty = 1)
+}
+
+abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
+
+for (i in 1:500) {
+ abline(posterior2$alpha[i], posterior2$beta[i], col = "gray", lty = 1)
+}
+
+abline(mean(posterior2$alpha), mean(posterior2$beta), col = 'blue', lw = 2)
+
+abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 2, lty = 2, lw = 5)
+```
+
 ### Save the environment
 ```{r}
 save.image(here('./Data/Output/CurrentDataState.RData'))
