@@ -1,0 +1,325 @@
+---
+title: "Ch. 1 - Model comaprisons"
+author: "Wade VanderWright"
+date: '2022-02-25'
+output: 
+  pdf_document:
+    fig_height: 5
+    fig_width: 7
+    df_print: kable
+  
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+##Load Packages
+library(ape)
+library(phytools)
+library(nlme)
+#library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(geiger)
+#library(caper)
+#library(xlsx)
+library(here)
+library(readxl)
+library(StanHeaders)
+library(brms)
+
+library(rstan)
+library(gdata)
+library(bayesplot)
+
+#Run this and skip to line 348
+load(here('./Data/Output/CurrentDataState.RData'))
+
+```
+
+# Model Comparisons
+
+## Model 1 - CFAR ~ GSH
+
+### brms model
+```
+Model_plain <- brm(Log10CFAR ~ Log10MeanGSH_centered,
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    prior = Plain_prior
+                    )
+```
+
+```{r }
+fixef(Model_plain, summary = T)
+```
+
+
+```{r echo=FALSE}
+
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+for (i in 1:500) {
+ abline(fixef(Model_plain, summary = F)[i,1], fixef(Model_plain, summary = F)[i,2], col = "gray", lty = 1)
+}
+
+ abline(fixef(Model_plain)[1,1], fixef(Model_plain)[2,1], col = 6, lw = 2)
+```
+
+
+### STAN model
+
+Data considered
+```
+data {
+  int <lower=1> N;
+  vector[N] x;
+  vector[N] y;
+}
+```
+The parameters accepted by the model
+```
+parameters {
+  real alpha;
+  real beta;
+  real<lower=0> sigma;
+}
+```
+Model form:
+```
+model {
+  y ~ normal(alpha + x * beta , sigma);
+}
+```
+```{r}
+fit1
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+for (i in 1:500) {
+ abline(posterior$alpha[i], posterior$beta[i], col = "gray", lty = 1)
+}
+
+abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
+```
+
+## Model 2 - CFAR ~ GSH * Max Size
+
+### brms model
+```
+Model_size <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered,
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    prior = Size_prior
+                    )
+  ```                  
+```{r}
+fixef(Model_size, summary = T)
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+for (i in 1:500) {
+ abline(fixef(Model_size, summary = F)[i,1], fixef(Model_size, summary = F)[i,2], col = "gray", lty = 1)
+}
+
+ abline(fixef(Model_size)[1,1], fixef(Model_size)[2,1], col = 6, lw = 2)
+```
+
+
+### STAN model
+
+Data considered
+
+```
+
+data {
+  int <lower=0> N; // number of data points
+  int <lower=0> K; // number of predictors (2; GSH and Size)
+  matrix[N,K] x; // predictor matrix
+  vector[N] y; // outcome (CFAR)
+}
+```
+
+The parameters accepted by the model. 
+
+`parameters {
+  real alpha;
+  vector[K] beta;
+  real<lower=0> sigma;
+}`
+
+The model to be estimated. We model the output 'y' to be normally distributed with mean 'mu' and standard deviation 'sigma'.
+
+`model {
+  y ~ normal(alpha + x * beta , sigma);
+}`
+
+```{r}
+fit2
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
+
+for (i in 1:500) {
+ abline(posterior2$alpha[i], posterior2$beta[i], col = "gray", lty = 1)
+} 
+
+abline(mean(posterior2$alpha), mean(posterior2$beta), col = 6, lw = 2)
+
+```
+
+
+## Model 3 - CFAR ~ GSH + Max Size (No interaction)
+
+### brms model
+
+```
+Model_size_2 <- brm(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered,
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    prior = Size_prior_2)
+```
+```{r}
+summary(Model_size_2)
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+for (i in 1:500) {
+ abline(fixef(Model_size_2, summary = F)[i,1], fixef(Model_size_2, summary = F)[i,2], col = "gray", lty = 1)
+}
+
+ abline(fixef(Model_size_2)[1,1], fixef(Model_size_2)[2,1], col = 6, lw = 2)
+```
+
+### STAN model
+
+TBD
+
+## Model 4 - CFAR ~ GSH + (1|Max Size) (No interaction)
+
+### brms model
+```
+Model_size_3 <- brm(Log10CFAR ~ Log10MeanGSH_centered + (1|Log10MaxSize_centered),
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    prior = Size_prior_3,
+                    control = list(adapt_delta = 0.9)) #needed to make model converge ...
+                    ```
+
+```{r}
+summary(Model_size_3)
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+for (i in 1:500) {
+ abline(fixef(Model_size_3, summary = F)[i,1], fixef(Model_size_3, summary = F)[i,2], col = "gray", lty = 1)
+}
+
+ abline(fixef(Model_size_3)[1,1], fixef(Model_size_3)[2,1], col = 6, lw = 2)
+```
+
+
+### STAN model
+
+TBD
+
+## Model 5 - CFAR ~ GSH + Phylogeny
+
+### PGLS model
+```
+pglsMod1 <- gls(Log10CFAR ~ Log10MeanGSH_centered, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+```
+```{r}
+summary(pglsMod1)
+```
+
+```{r echo=FALSE}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+abline(a = coef(pglsMod1)[1], b = coef(pglsMod1)[2], col = 6, lw = 2)
+```
+
+### brms model
+```
+Model_simple <- brm(Log10CFAR ~ Log10MeanGSH_centered + (1|gr(Binomial, cov = A)),
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    data2 = list(A = A),
+                    prior = Simple_prior,
+                    cores = 2)
+                    ```
+```{r}
+summary(Model_simple)
+```
+
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+for (i in 1:500) {
+ abline(fixef(Model_simple, summary = F)[i,1], fixef(Model_simple, summary = F)[i,2], col = "gray", lty = 1)
+}
+
+ abline(fixef(Model_simple)[1,1], fixef(Model_simple)[2,1], col = 6, lw = 2)
+```
+
+### STAN model
+
+TBD
+
+## Model 5 - CFAR ~ GSH * Max Size + Phylogeny
+
+### PGLS model
+
+TBD
+
+### brms model
+```
+Model_BS <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered + (1|gr(Binomial, cov = A)),
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    data2 = list(A = A),
+                    prior = BS_prior,
+                sample_prior = TRUE, chains = 4, cores = 2)
+```
+
+```{r}
+summary(Model_BS)
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+for (i in 1:500) {
+ abline(fixef(Model_BS, summary = F)[i,1], fixef(Model_BS, summary = F)[i,2], col = "gray", lty = 1)
+}
+
+ abline(fixef(Model_BS)[1,1], fixef(Model_BS)[2,1], col = 6, lw = 2)
+```
+
+### STAN model
+
+TBD
+
+## Model 6 - CFAR ~ GSH + Max Size + Phylogeny
+
+### PGLS model
+
+TBD
+
+### brms model
+
+TBD
+
+### STAN model
+
+TBD

@@ -20,7 +20,9 @@ knitr::opts_chunk$set(echo = FALSE)
 library(ape)
 library(phytools)
 library(nlme)
-library(tidyverse)
+#library(tidyverse)
+library(ggplot2)
+library(dplyr)
 library(geiger)
 #library(caper)
 #library(xlsx)
@@ -245,18 +247,18 @@ plot(conditional_effects(Model_size_2), points = TRUE) #hit enter in the console
 
 ## BRMS no tree, with body size as additional predictor (intercept only)
 ```{r}
-#Size_prior_3 <- get_prior(Log10CFAR ~ Log10MeanGSH_centered + (1|Log10MaxSize_centered),
-#                    data = GSH_df_pgls,
-#                    family = gaussian())
-#
-#Model_size_3 <- brm(Log10CFAR ~ Log10MeanGSH_centered + (1|Log10MaxSize_centered),
-#                    data = GSH_df_pgls,
-#                    family = gaussian(),
-#                    #data2 = list(A = A), #don't need for this model
-#                    prior = Size_prior_3,
-#                    control = list(adapt_delta = 0.9))
-#
-#summary(Model_size_3)
+Size_prior_3 <- get_prior(Log10CFAR ~ Log10MeanGSH_centered + (1|Log10MaxSize_centered),
+                    data = GSH_df_pgls,
+                    family = gaussian())
+
+Model_size_3 <- brm(Log10CFAR ~ Log10MeanGSH_centered + (1|Log10MaxSize_centered),
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    #data2 = list(A = A), #don't need for this model
+                    prior = Size_prior_3,
+                    control = list(adapt_delta = 0.9))
+
+summary(Model_size_3)
 ```
 
 ```{r}
@@ -351,7 +353,7 @@ plot(hyp)
 ##Data prep #add in priors from brms?
 
 y <- GSH_df_pgls$Log10CFAR
-x <- GSH_df_pgls$Log10MeanGSH
+x <- c(GSH_df_pgls$Log10MeanGSH_centered)
 z <- GSH_df_pgls$Log10MaxSize_centered 
 N <- length(GSH_df_pgls$Binomial)
 
@@ -389,6 +391,7 @@ for (i in 1:500) {
 
 abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
 ```
+
 ## STAN model comparison 2
 ```{r}
 ## Stan Model 2 -- Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered
@@ -397,7 +400,7 @@ abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
 N <- length(GSH_df_pgls$Binomial)
 K <- 2
 y <- GSH_df_pgls$Log10CFAR
-x <- matrix(c(GSH_df_pgls$Log10MeanGSH, GSH_df_pgls$Log10MaxSize_centered), ncol = 2, byrow = F)
+x <- matrix(c(GSH_df_pgls$Log10MeanGSH_centered, GSH_df_pgls$Log10MaxSize_centered), ncol = 2, byrow = F)
 
 stan_data2 <- list(N=N,K=K,y=y,x=x)
 
