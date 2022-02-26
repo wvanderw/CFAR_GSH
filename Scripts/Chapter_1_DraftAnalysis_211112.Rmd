@@ -171,8 +171,50 @@ summary(pglsMod1)
 ```
 
 ```{r}
-plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls)
-abline(a = coef(pglsMod1)[1], b = coef(pglsMod1)[2])
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch=20)
+abline(a = coef(pglsMod1)[1], b = coef(pglsMod1)[2], col = 6, lw = 2)
+```
+
+## pgls with body size
+```{r}
+pglsMod2 <- gls(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+
+summary(pglsMod2)
+```
+
+```{r}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+
+abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 6, lw = 2)
+```
+
+## pgls with body size (no interaction)
+```{r}
+pglsMod3 <- gls(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+
+summary(pglsMod3)
+```
+
+```{r}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+
+abline(a = coef(pglsMod3)[1], b = coef(pglsMod3)[2], col = 6, lw = 2)
+```
+
+
+## pgls with bosy size (no interaction; intercept only)
+
+```{r}
+pglsMod4 <- gls(Log10CFAR ~ Log10MeanGSH_centered + (1|Log10MaxSize_centered), correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML",
+                control = list(singular.ok = TRUE))
+
+summary(pglsMod4)
+```
+
+```{r}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+
+abline(a = coef(pglsMod4)[1], b = coef(pglsMod4)[2], col = 6, lw = 2)
 ```
 
 
