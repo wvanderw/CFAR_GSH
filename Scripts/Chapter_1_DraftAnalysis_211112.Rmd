@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = FALSE)
 ## Set up
 ```{r}
 ##Install packages
-#install.packages(c('ape','phytools','nlme','tidyverse','gieger','xlsx','here','readxl','brms','rstan','gdata','bayesplot','StanHeaders'))
+#install.packages(c('ape','phytools','nlme','tidyverse','gieger','xlsx','here','readxl','brms','rstan','gdata','bayesplot','StanHeaders', 'caper'))
 
 
 ##Load Packages
@@ -61,7 +61,7 @@ load(here('./Data/Output/CurrentDataState.RData'))
 ```{r}
 getwd()
 
-#load last workspace
+#load last workspace above and skip this ^^^^
 #
 
 # GSH Data ####
@@ -147,6 +147,12 @@ GSH_df_pgls <- subset(GSH_df, GSH_df$Binomial %nin% namedrops$data_not_tree)
 z <- mean(GSH_df_pgls$Log10MaxSize)
 GSH_df_pgls$Log10MaxSize_centered <- center_scale(GSH_df_pgls$Log10MaxSize, z)
 GSH_df_pgls$Log10MaxSize_centered <- as.numeric(GSH_df_pgls$Log10MaxSize_centered)
+
+#order dataframe to match tree tip labels
+target <- SampleTree$tip.label
+
+GSH_df_pgls <- GSH_df_pgls %>% 
+  arrange(factor(GSH_df_pgls$Binomial, levels = target))
 
 #covariance matrix?
 A <- ape::vcv.phylo(SampleTree)
@@ -547,6 +553,29 @@ abline(mean(posterior3$alpha), mean(posterior3$beta), col = 'green', lw = 2)
 
 abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 2, lty = 2, lw = 5)
 ```
+
+
+#Lambda and residuals
+
+
+Model 5 - CFAR ~ GSH + Phylogeny
+
+```{r}
+mod5 <- phyl.resid(SampleTree, GSH_df_pgls$Log10MeanGSH_centered, GSH_df_pgls$Log10CFAR, method = 'lambda')
+```
+
+Model 6 - CFAR ~ GSH * Max Size + Phylogeny 
+
+```{r}
+mod6 <- phyl.resid(SampleTree, matrix(c(GSH_df_pgls$Log10MeanGSH_centered, GSH_df_pgls$Log10MaxSize_centered,(GSH_df_pgls$Log10MeanGSH_centered*GSH_df_pgls$Log10MaxSize_centered)), ncol = 3, byrow = F), GSH_df_pgls$Log10CFAR, method = 'lambda')
+```
+
+Model 7 - CFAR ~ GSH + Max Size + Phylogeny 
+
+```{r}
+mod7 <- phyl.resid(SampleTree, matrix(c(GSH_df_pgls$Log10MeanGSH_centered, GSH_df_pgls$Log10MaxSize_centered), ncol = 2, byrow = F), GSH_df_pgls$Log10CFAR, method = 'lambda')
+```
+
 
 
 ### Save the environment
