@@ -62,7 +62,7 @@ fixef(Model_plain, summary = T)
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
 
 for (i in 1:500) {
- abline(fixef(Model_plain, summary = F)[i,1], fixef(Model_plain, summary = F)[i,2], col = "gray", lty = 1)
+ abline(fixef(Model_plain, summary = F)[i,1], fixef(Model_plain, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
  abline(fixef(Model_plain)[1,1], fixef(Model_plain)[2,1], col = 6, lw = 2)
@@ -90,6 +90,9 @@ parameters {
 Model form:
 ```
 model {
+  
+  sigma ~ student_t(3, 0, 10);
+  
   y ~ normal(alpha + x * beta , sigma);
 }
 ```
@@ -101,7 +104,7 @@ fit1
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
 
 for (i in 1:500) {
- abline(posterior$alpha[i], posterior$beta[i], col = "gray", lty = 1)
+ abline(posterior$alpha[i], posterior$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
 abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
@@ -125,7 +128,7 @@ fixef(Model_size, summary = T)
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
 
 for (i in 1:500) {
- abline(fixef(Model_size, summary = F)[i,1], fixef(Model_size, summary = F)[i,2], col = "gray", lty = 1)
+ abline(fixef(Model_size, summary = F)[i,1], fixef(Model_size, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
  abline(fixef(Model_size)[1,1], fixef(Model_size)[2,1], col = 6, lw = 2)
@@ -140,25 +143,31 @@ Data considered
 
 data {
   int <lower=0> N; // number of data points
-  int <lower=0> K; // number of predictors (2; GSH and Size)
+  int <lower=0> K; // number of predictors
   matrix[N,K] x; // predictor matrix
-  vector[N] y; // outcome (CFAR)
+  vector[N] y; // CFAR
 }
 ```
 
 The parameters accepted by the model. 
-
-`parameters {
+```
+parameters {
   real alpha;
   vector[K] beta;
   real<lower=0> sigma;
-}`
+}
+```
 
 The model to be estimated. We model the output 'y' to be normally distributed with mean 'mu' and standard deviation 'sigma'.
 
-`model {
+```
+model {
+
+  sigma ~ student_t(3, 0, 10);
+
   y ~ normal(alpha + x * beta , sigma);
-}`
+}
+```
 
 ```{r}
 fit2
@@ -168,7 +177,7 @@ fit2
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
 
 for (i in 1:500) {
- abline(posterior2$alpha[i], posterior2$beta[i], col = "gray", lty = 1)
+ abline(posterior2$alpha[i], posterior2$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 } 
 
 abline(mean(posterior2$alpha), mean(posterior2$beta), col = 6, lw = 2)
@@ -194,7 +203,7 @@ summary(Model_size_2)
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
 
 for (i in 1:500) {
- abline(fixef(Model_size_2, summary = F)[i,1], fixef(Model_size_2, summary = F)[i,2], col = "gray", lty = 1)
+ abline(fixef(Model_size_2, summary = F)[i,1], fixef(Model_size_2, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
  abline(fixef(Model_size_2)[1,1], fixef(Model_size_2)[2,1], col = 6, lw = 2)
@@ -202,7 +211,54 @@ for (i in 1:500) {
 
 ### STAN model
 
-TBD
+
+Data considered
+
+```
+
+data {
+  int <lower=0> N; // number of data points
+  int <lower=0> K; // number of predictors
+  matrix[N,K] x; // predictor matrix
+  vector[N] y; // CFAR
+}
+```
+
+The parameters accepted by the model. 
+
+```
+parameters {
+  real alpha;
+  vector[K] beta;
+  real<lower=0> sigma;
+}
+```
+
+The model to be estimated. We model the output 'y' to be normally distributed with mean 'mu' and standard deviation 'sigma'.
+
+```
+model {
+
+  sigma ~ student_t(3, 0, 10);
+
+  y ~ normal(alpha + x * beta , sigma);
+}
+```
+
+```{r}
+fit3
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
+
+for (i in 1:500) {
+ abline(posterior3$alpha[i], posterior3$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+} 
+
+abline(mean(posterior3$alpha), mean(posterior3$beta), col = 6, lw = 2)
+
+```
 
 ## Model 4 - CFAR ~ GSH + (1|Max Size) (No interaction)
 
@@ -223,7 +279,7 @@ summary(Model_size_3)
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
 
 for (i in 1:500) {
- abline(fixef(Model_size_3, summary = F)[i,1], fixef(Model_size_3, summary = F)[i,2], col = "gray", lty = 1)
+ abline(fixef(Model_size_3, summary = F)[i,1], fixef(Model_size_3, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
  abline(fixef(Model_size_3)[1,1], fixef(Model_size_3)[2,1], col = 6, lw = 2)
@@ -257,7 +313,8 @@ Model_simple <- brm(Log10CFAR ~ Log10MeanGSH_centered + (1|gr(Binomial, cov = A)
                     data2 = list(A = A),
                     prior = Simple_prior,
                     cores = 2)
-                    ```
+```
+                    
 ```{r}
 summary(Model_simple)
 ```
@@ -267,7 +324,7 @@ summary(Model_simple)
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
 
 for (i in 1:500) {
- abline(fixef(Model_simple, summary = F)[i,1], fixef(Model_simple, summary = F)[i,2], col = "gray", lty = 1)
+ abline(fixef(Model_simple, summary = F)[i,1], fixef(Model_simple, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
  abline(fixef(Model_simple)[1,1], fixef(Model_simple)[2,1], col = 6, lw = 2)
@@ -280,6 +337,10 @@ TBD
 ## Model 5 - CFAR ~ GSH * Max Size + Phylogeny
 
 ### PGLS model
+
+```
+pglsMod2 <- gls(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+```
 
 
 ```{r}
@@ -311,7 +372,7 @@ summary(Model_BS)
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
 
 for (i in 1:500) {
- abline(fixef(Model_BS, summary = F)[i,1], fixef(Model_BS, summary = F)[i,2], col = "gray", lty = 1)
+ abline(fixef(Model_BS, summary = F)[i,1], fixef(Model_BS, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
  abline(fixef(Model_BS)[1,1], fixef(Model_BS)[2,1], col = 6, lw = 2)
@@ -325,6 +386,9 @@ TBD
 
 ### PGLS model
 
+```
+pglsMod3 <- gls(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+```
 
 ```{r}
 summary(pglsMod3)

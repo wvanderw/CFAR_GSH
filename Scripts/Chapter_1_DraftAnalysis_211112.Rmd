@@ -438,11 +438,14 @@ abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
 ```{r}
 ## Stan Model 2 -- Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered
 
+#not used
+data_matrix_2 <- model.matrix(~ Log10MeanGSH_centered * Log10MaxSize_centered, data = GSH_df_pgls)
+
 #data
 N <- length(GSH_df_pgls$Binomial)
-K <- 2
+K <- 3
 y <- GSH_df_pgls$Log10CFAR
-x <- matrix(c(GSH_df_pgls$Log10MeanGSH_centered, GSH_df_pgls$Log10MaxSize_centered), ncol = 2, byrow = F)
+x <- matrix(c(GSH_df_pgls$Log10MeanGSH_centered, GSH_df_pgls$Log10MaxSize_centered,(GSH_df_pgls$Log10MeanGSH_centered*GSH_df_pgls$Log10MaxSize_centered)), ncol = 3, byrow = F)
 
 stan_data2 <- list(N=N,K=K,y=y,x=x)
 
@@ -465,7 +468,7 @@ posterior2 <- extract(fit2)
 ```{r}
 pglsMod2 <- gls(y ~ x, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
 
-plot(y ~ x, pch = 20)
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
 
 
 for (i in 1:500) {
@@ -482,6 +485,69 @@ abline(mean(posterior2$alpha), mean(posterior2$beta), col = 'blue', lw = 2)
 
 abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 2, lty = 2, lw = 5)
 ```
+
+## STAN model comparison 3
+```{r}
+## Stan Model 3 -- Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered
+
+#not used
+data_matrix_3 <- model.matrix(~ Log10MeanGSH_centered + Log10MaxSize_centered, data = GSH_df_pgls)
+
+#data
+N <- length(GSH_df_pgls$Binomial)
+K <- 2
+y <- GSH_df_pgls$Log10CFAR
+x <- matrix(c(GSH_df_pgls$Log10MeanGSH_centered, GSH_df_pgls$Log10MaxSize_centered), ncol = 2, byrow = F)
+
+stan_data3 <- list(N=N,K=K,y=y,x=x)
+
+#prior
+stan2_prior <- Size_prior_2
+
+## Stan Model 2 -- Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered
+StanModel2 <- stan_model(file = here('Scripts', 'StanModel2.stan'))
+
+fit3 <- stan(file = './StanModel2.stan', data = stan_data3, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1)
+  
+
+```
+
+
+```{r}
+fit3
+posterior3 <- extract(fit3)
+```
+
+```{r}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+
+for (i in 1:500) {
+ abline(posterior$alpha[i], posterior$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+
+
+for (i in 1:500) {
+ abline(posterior2$alpha[i], posterior2$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+
+
+for (i in 1:500) {
+ abline(posterior3$alpha[i], posterior3$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
+
+abline(mean(posterior2$alpha), mean(posterior2$beta), col = 'blue', lw = 2)
+
+abline(mean(posterior3$alpha), mean(posterior3$beta), col = 'green', lw = 2)
+
+
+abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 2, lty = 2, lw = 5)
+```
+
 
 ### Save the environment
 ```{r}

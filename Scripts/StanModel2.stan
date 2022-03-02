@@ -6,7 +6,7 @@
 // The input data are vectors 'x' & 'y' of length 'N'.
 data {
   int <lower=0> N; // number of data points
-  int <lower=0> K; // number of predictors (2 GSH and Size)
+  int <lower=0> K; // number of predictors 
   matrix[N,K] x; // predictor matrix
   vector[N] y; // outcome (CFAR)
  
@@ -24,6 +24,9 @@ parameters {
 // 'y' to be normally distributed with mean 'mu'
 // and standard deviation 'sigma'.
 model {
+  
+  sigma ~ student_t(3, 0, 10);
+  
   y ~ normal(alpha + x * beta , sigma);
 }
 

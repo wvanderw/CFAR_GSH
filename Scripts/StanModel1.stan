@@ -20,6 +20,8 @@ parameters {
 // 'y' to be normally distributed with mean 'mu'
 // and standard deviation 'sigma'.
 model {
+  sigma ~ student_t(3, 0, 10);
+  
   y ~ normal(alpha + x * beta , sigma);
 }
 
