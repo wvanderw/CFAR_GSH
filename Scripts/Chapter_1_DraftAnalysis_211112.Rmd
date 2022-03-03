@@ -154,7 +154,7 @@ target <- SampleTree$tip.label
 GSH_df_pgls <- GSH_df_pgls %>% 
   arrange(factor(GSH_df_pgls$Binomial, levels = target))
 
-#covariance matrix?
+#covariance matrix
 A <- ape::vcv.phylo(SampleTree)
 
 
@@ -402,10 +402,9 @@ plot(hyp)
 
 y <- GSH_df_pgls$Log10CFAR
 x <- c(GSH_df_pgls$Log10MeanGSH_centered)
-z <- GSH_df_pgls$Log10MaxSize_centered 
 N <- length(GSH_df_pgls$Binomial)
 
-stan_data <- list(N = N, x = x, y = y, z = z)
+stan_data <- list(N = N, x = x, y = y)
   
 ## Stan Model 1 -- Log10CFAR ~ Log10MeanGSH_centered
 StanModel1 <- stan_model(file = here('Scripts', 'StanModel1.stan'))
@@ -555,7 +554,70 @@ abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 2, lty = 2, lw = 5)
 ```
 
 
-#Lambda and residuals
+##STAN Model 4
+
+```{r}
+y <- GSH_df_pgls$Log10CFAR
+x <- matrix(c(GSH_df_pgls$Log10MeanGSH_centered), ncol = 1)
+N <- length(GSH_df_pgls$Binomial)
+K <- ncol(x)
+d_mat <- diag(1, 456, 456)
+
+
+
+stan_data4 <- list(N = N, x = x, y = y, K =K, d_mat = d_mat, A = A)
+  
+## Stan Model 4 -- Log10CFAR ~ Log10MeanGSH_centered + tree
+StanModel4 <- stan_model(file = here('Scripts', 'StanModel3.stan'))
+
+fit4 <- stan(file = './StanModel3.stan', data = stan_data4, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 10,
+             pars = c("alpha", "beta"))
+  
+
+```
+```{r}
+fit4
+posterior4 <- extract(fit4)
+```
+
+
+```{r}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+
+for (i in 1:500) {
+ abline(posterior$alpha[i], posterior$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+
+
+for (i in 1:500) {
+ abline(posterior2$alpha[i], posterior2$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+
+
+for (i in 1:500) {
+ abline(posterior3$alpha[i], posterior3$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+for (i in 1:200) {
+ abline(posterior4$alpha[i], posterior4$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
+
+abline(mean(posterior2$alpha), mean(posterior2$beta), col = 'blue', lw = 2)
+
+abline(mean(posterior3$alpha), mean(posterior3$beta), col = 'green', lw = 2)
+
+abline(mean(posterior4$alpha), mean(posterior4$beta), col = 'red', lw = 2)
+
+abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = "black", lty = 2, lw = 5)
+```
+
+
+#Lambda and residuals (quick and dirty)
 
 
 Model 5 - CFAR ~ GSH + Phylogeny
