@@ -394,7 +394,7 @@ fit4
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
 
 for (i in 1:200) {
- abline(posterior4$alpha[i], posterior4$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+ abline(posterior4$alpha[i], posterior4$beta[i], col = adjustcolor("gray", alpha = 0.15), lty = 1)
 } 
 
 abline(mean(posterior4$alpha), mean(posterior4$beta), col = 6, lw = 2)
@@ -447,7 +447,73 @@ for (i in 1:500) {
 
 ### STAN model
 
-TBD
+Data considered
+
+```
+data {
+  int <lower=0> N; // number of data points
+  int <lower=0> K; // number of predictors 
+  matrix[N,K] x; // predictor matrix
+  vector[N] y; // outcome (CFAR)
+  matrix[N, N] d_mat; // sigma matrix
+  matrix[N, N] A; // vcov matrix
+      }
+```
+
+The parameters accepted by the model. 
+
+```
+ parameters {
+        real alpha;
+        vector[K] beta; // coefficients
+        real<lower=0> sigma; // error
+        real<lower=0,upper=1> lambda; // phylogenetic signal
+      }
+      
+      
+      transformed parameters {
+        
+        matrix[N, N] sigma_mat;
+        matrix[N, N] sigma_total;
+        
+        vector[N] mu_y;
+        
+
+        sigma_mat = (1-lambda)*d_mat + lambda*A;
+        sigma_total = sigma*sigma_mat;
+        
+        
+
+      }
+```
+
+The model to be estimated. We model the output 'y' to be normally distributed with mean 'mu' and standard deviation 'sigma'.
+
+```
+model {
+  
+  beta ~ student_t(3, 0, 10);
+  lambda ~ uniform(0,1);
+  sigma ~ student_t(3, 0, 2.5);
+  
+  y ~ multi_normal(alpha + x * beta, sigma_total);
+}
+```
+
+```{r}
+fit5
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
+
+for (i in 1:200) {
+ abline(posterior5$alpha[i], posterior5$beta[i], col = adjustcolor("gray", alpha = 0.15), lty = 1)
+} 
+
+abline(mean(posterior5$alpha), mean(posterior5$beta), col = 6, lw = 2)
+
+```
 
 ## Model 6 - CFAR ~ GSH + Max Size + Phylogeny
 

@@ -148,6 +148,12 @@ z <- mean(GSH_df_pgls$Log10MaxSize)
 GSH_df_pgls$Log10MaxSize_centered <- center_scale(GSH_df_pgls$Log10MaxSize, z)
 GSH_df_pgls$Log10MaxSize_centered <- as.numeric(GSH_df_pgls$Log10MaxSize_centered)
 
+#change depth data to numeric (will have to drop NAs in depth models)
+GSH_df_pgls$DepthMax_m_text <- as.numeric(GSH_df_pgls$DepthMax_m_text)
+
+GSH_df_pgls$DepthMin_m_text <- as.numeric(GSH_df_pgls$DepthMin_m_text)
+
+
 #order dataframe to match tree tip labels
 target <- SampleTree$tip.label
 
@@ -315,6 +321,73 @@ summary(Model_size_3)
 
 
 ```
+
+##BRMS with habitat type (No interaction)
+```{r}
+habitat_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat,
+                    data = GSH_df_pgls,
+                    family = gaussian())
+
+#run time was about 30 minutes
+habitat_model <- brm(Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat,
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    prior = habitat_prior,
+                    cores = 2)
+
+summary(habitat_model)
+
+
+```
+
+
+```{r}
+plot(conditional_effects(habitat_model), points = TRUE)
+
+```
+
+```{r}
+plot(habitat_model, N=2, ask = F)
+```
+
+
+```{r}
+hyp <- "sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0"
+(hyp <- hypothesis(Model_simple, hyp, class = NULL))
+```
+
+```{r}
+plot(hyp)
+```
+
+##BRMS with habitat type interaction
+```{r}
+habitat_prior2 <- get_prior(Log10CFAR ~ Log10MeanGSH_centered * PrimaryHabitat,
+                    data = GSH_df_pgls,
+                    family = gaussian())
+
+#run time was about 30 minutes
+habitat_model_2 <- brm(Log10CFAR ~ Log10MeanGSH_centered * PrimaryHabitat,
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    prior = habitat_prior2,
+                    cores = 2)
+
+summary(habitat_model_2)
+
+
+```
+
+
+```{r}
+plot(conditional_effects(habitat_model_2), points = TRUE)
+
+```
+
+```{r}
+plot(habitat_model_2, N=2, ask = F)
+```
+
 
 ## BRMS with tree, no interation with body size
 ```{r}
@@ -554,7 +627,7 @@ abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 2, lty = 2, lw = 5)
 ```
 
 
-##STAN Model 4
+##STAN Model 4 (CFAR ~ GSH + tree)
 
 ```{r}
 y <- GSH_df_pgls$Log10CFAR
@@ -614,6 +687,33 @@ abline(mean(posterior3$alpha), mean(posterior3$beta), col = 'green', lw = 2)
 abline(mean(posterior4$alpha), mean(posterior4$beta), col = 'red', lw = 2)
 
 abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = "black", lty = 2, lw = 5)
+```
+
+
+##STAN Model 5 (CFAR ~ GSH * Max Size + tree)
+```{r}
+y <- GSH_df_pgls$Log10CFAR
+x <- matrix(c(GSH_df_pgls$Log10MeanGSH_centered, GSH_df_pgls$Log10MaxSize_centered,(GSH_df_pgls$Log10MeanGSH_centered*GSH_df_pgls$Log10MaxSize_centered)), ncol = 3, byrow = F)
+N <- length(GSH_df_pgls$Binomial)
+K <- ncol(x)
+d_mat <- diag(1, 456, 456)
+
+
+
+stan_data5 <- list(N = N, x = x, y = y, K =K, d_mat = d_mat, A = A)
+  
+## Stan Model 4 -- Log10CFAR ~ Log10MeanGSH_centered + tree
+StanModel5 <- stan_model(file = here('Scripts', 'StanModel3.stan'))
+
+fit5 <- stan(file = './StanModel3.stan', data = stan_data5, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 10,
+             pars = c("alpha", "beta"))
+  
+
+```
+
+```{r}
+fit5
+posterior5 <- extract(fit5)
 ```
 
 
