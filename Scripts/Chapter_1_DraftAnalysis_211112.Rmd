@@ -214,7 +214,7 @@ abline(a = coef(pglsMod3)[1], b = coef(pglsMod3)[2], col = 6, lw = 2)
 ```
 
 
-## pgls with bosy size (no interaction; intercept only)
+## pgls with body size (no interaction; intercept only)
 
 ```{r}
 pglsMod4 <- gls(Log10CFAR ~ Log10MeanGSH_centered + (1|Log10MaxSize_centered), correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML",
@@ -228,6 +228,58 @@ plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
 
 abline(a = coef(pglsMod4)[1], b = coef(pglsMod4)[2], col = 6, lw = 2)
 ```
+
+##pgls with habitat type (no interation)
+```{r}
+pglsMod5 <- gls(Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+
+summary(pglsMod5)
+```
+
+```{r}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+
+abline(a = coef(pglsMod5)[1], 
+       b = coef(pglsMod5)[2], 
+       col = 6, lw = 2)
+
+abline(a = coef(pglsMod5)[1] + coef(pglsMod5)[3], 
+       b = coef(pglsMod5)[2], col = 'blue', lw =2)
+       
+abline(a = (coef(pglsMod5)[1] + coef(pglsMod5)[4]), 
+       b = coef(pglsMod5)[2], 
+       col = 'green', lw =2)
+
+```
+
+
+##pgls with habitat interaction
+```{r}
+pglsMod6 <- gls(Log10CFAR ~ Log10MeanGSH_centered * PrimaryHabitat, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML",
+                control = list(singular.ok = TRUE))
+
+summary(pglsMod6)
+```
+
+
+```{r}
+
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+
+abline(a = coef(pglsMod6)[1], 
+       b = coef(pglsMod6)[2], 
+       col = 6, lw = 2)
+
+abline(a = coef(pglsMod6)[1] + coef(pglsMod6)[3], 
+       b = coef(pglsMod6)[2] + coef(pglsMod6)[5], 
+       col = 'blue', lw =2)
+       
+abline(a = (coef(pglsMod6)[1] + coef(pglsMod6)[4]), 
+       b = coef(pglsMod5)[2] + coef(pglsMod6)[6], 
+       col = 'green', lw =2)
+
+```
+
 
 
 ## BRMS no tree , no interaction with body size
@@ -316,7 +368,7 @@ summary(Model_size_3)
 ```
 
 ```{r}
-#plot(conditional_effects(Model_size_3), points = TRUE) #hit enter in the console
+plot(conditional_effects(Model_size_3), points = TRUE) #hit enter in the console
 
 
 
@@ -418,6 +470,7 @@ plot(conditional_effects(Model_simple), points = TRUE)
 
 ```{r}
 plot(Model_simple, N=2, ask = F)
+
 ```
 
 
