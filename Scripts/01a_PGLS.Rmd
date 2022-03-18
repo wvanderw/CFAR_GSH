@@ -1,0 +1,81 @@
+---
+title: "01a_PGLS"
+author: "Wade VanderWright"
+date: '2022-03-16'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###01_a -- PGLS Models for Ch. 1
+## VanderWright, WJ
+## March 16, 2022
+
+#Model 5 - CFAR ~ GSH + tree
+
+```{r}
+pglsMod1 <- gls(Log10CFAR ~ Log10MeanGSH_centered, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+
+summary(pglsMod1)
+
+```
+
+```{r}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch=20)
+abline(a = coef(pglsMod1)[1], b = coef(pglsMod1)[2], col = 6, lw = 2)
+```
+
+#Model 6 - CFAR ~ GSH * MaxSize + tree
+```{r}
+pglsMod2 <- gls(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+
+summary(pglsMod2)
+```
+
+```{r}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+
+abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 6, lw = 2)
+```
+#Model 7 - CFAR ~ GSH + MaxSize + tree
+```{r}
+pglsMod3 <- gls(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+
+summary(pglsMod3)
+```
+
+```{r}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+
+abline(a = coef(pglsMod3)[1], b = coef(pglsMod3)[2], col = 6, lw = 2)
+```
+#Model 8 - CFAR ~ GSH + PrimaryHabitat + tree
+```{r}
+pglsMod5 <- gls(Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+
+summary(pglsMod5)
+```
+
+```{r}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+
+abline(a = coef(pglsMod5)[1], 
+       b = coef(pglsMod5)[2], 
+       col = 6, lw = 2)
+
+abline(a = coef(pglsMod5)[1] + coef(pglsMod5)[3], 
+       b = coef(pglsMod5)[2], col = 'blue', lw =2)
+       
+abline(a = (coef(pglsMod5)[1] + coef(pglsMod5)[4]), 
+       b = coef(pglsMod5)[2], 
+       col = 'green', lw =2)
+
+```
+#Model 9 - CFAR ~ GSH * PrimaryHabitat + tree
+
+#Model 10 - CFAR ~ GSH + MaxSize + PrimaryHabitat + tree
+
+#Model 11 - CFAR ~ GSH * MaxSize + PrimaryHabitat + tree
+

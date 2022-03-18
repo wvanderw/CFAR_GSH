@@ -27,6 +27,11 @@ model {
 
 // need to redefine to keep for comaprison
 generated quantities {
- 
+ vector[N] log_lik;
+      for(i in 1:N) {
+          log_lik[i] = normal_lpdf(y[i] | x[i] * beta, sigma); 
+
+        
+      }
 }
 

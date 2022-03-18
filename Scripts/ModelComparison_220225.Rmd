@@ -43,7 +43,7 @@ load(here('./Data/Output/CurrentDataState.RData'))
 
 ## Model 1 - CFAR ~ GSH
 
-### brms model
+1. brms model
 ```
 Model_plain <- brm(Log10CFAR ~ Log10MeanGSH_centered,
                     data = GSH_df_pgls,
@@ -65,11 +65,11 @@ for (i in 1:500) {
  abline(fixef(Model_plain, summary = F)[i,1], fixef(Model_plain, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
- abline(fixef(Model_plain)[1,1], fixef(Model_plain)[2,1], col = 6, lw = 2)
+ abline(fixef(Model_plain)[1,1], fixef(Model_plain)[2,1], col = 'blue', lw = 2)
 ```
 
 
-### STAN model
+2. STAN model
 
 Data considered
 ```
@@ -97,7 +97,7 @@ model {
 }
 ```
 ```{r}
-fit1
+
 ```
 
 ```{r echo=FALSE}
@@ -107,12 +107,15 @@ for (i in 1:500) {
  abline(posterior$alpha[i], posterior$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
-abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
+abline(fixef(Model_plain)[1,1], fixef(Model_plain)[2,1], col = 6, lw = 2)
+
+abline(mean(posterior$alpha), mean(posterior$beta), col = 'red', lw = 1)
 ```
+\newpage
 
 ## Model 2 - CFAR ~ GSH * Max Size
 
-### brms model
+1. brms model
 ```
 Model_size <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered,
                     data = GSH_df_pgls,
@@ -131,11 +134,11 @@ for (i in 1:500) {
  abline(fixef(Model_size, summary = F)[i,1], fixef(Model_size, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
- abline(fixef(Model_size)[1,1], fixef(Model_size)[2,1], col = 6, lw = 2)
+ abline(fixef(Model_size)[1,1], fixef(Model_size)[2,1], col = 'blue', lw = 2)
 ```
 
 
-### STAN model
+2. STAN model
 
 Data considered
 
@@ -177,17 +180,20 @@ fit2
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
 
 for (i in 1:500) {
- abline(posterior2$alpha[i], posterior2$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+ abline(posterior2$alpha[i], posterior2[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 } 
 
-abline(mean(posterior2$alpha), mean(posterior2$beta), col = 6, lw = 2)
+ abline(fixef(Model_size)[1,1], fixef(Model_size)[2,1], col = 'blue', lw = 2)
+
+
+abline(mean(posterior2$alpha), mean(posterior2[,2]), col = 'red', lw = 2)
 
 ```
-
+\newpage
 
 ## Model 3 - CFAR ~ GSH + Max Size (No interaction)
 
-### brms model
+1. brms model
 
 ```
 Model_size_2 <- brm(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered,
@@ -206,10 +212,10 @@ for (i in 1:500) {
  abline(fixef(Model_size_2, summary = F)[i,1], fixef(Model_size_2, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
- abline(fixef(Model_size_2)[1,1], fixef(Model_size_2)[2,1], col = 6, lw = 2)
+ abline(fixef(Model_size_2)[1,1], fixef(Model_size_2)[2,1], col = 'blue', lw = 2)
 ```
 
-### STAN model
+2. STAN model
 
 
 Data considered
@@ -253,46 +259,130 @@ fit3
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
 
 for (i in 1:500) {
- abline(posterior3$alpha[i], posterior3$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+ abline(posterior3$alpha[i], posterior3[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 } 
 
-abline(mean(posterior3$alpha), mean(posterior3$beta), col = 6, lw = 2)
+
+ abline(fixef(Model_size_2)[1,1], fixef(Model_size_2)[2,1], col = 'blue', lw = 2)
+
+abline(mean(posterior3$alpha), mean(posterior3[,2]), col = 'red', lw = 2)
 
 ```
+\newpage
 
-## Model 4 - CFAR ~ GSH + (1|Max Size) (No interaction)
+## Model 4 - CFAR ~ GSH + PrimaryHabitat (No interaction)
 
-### brms model
+1. brms model
 ```
-Model_size_3 <- brm(Log10CFAR ~ Log10MeanGSH_centered + (1|Log10MaxSize_centered),
+habitat_model <- brm(Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat,
                     data = GSH_df_pgls,
                     family = gaussian(),
-                    prior = Size_prior_3,
-                    control = list(adapt_delta = 0.9)) #needed to make model converge ...
-                    ```
+                    prior = habitat_prior,
+                    cores = 2)
+```
 
 ```{r}
-summary(Model_size_3)
+summary(habitat_model)
 ```
 
 ```{r echo=FALSE}
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
 
 for (i in 1:500) {
- abline(fixef(Model_size_3, summary = F)[i,1], fixef(Model_size_3, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+ abline(fixef(habitat_model, summary = F)[i,1], fixef(habitat_model, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
- abline(fixef(Model_size_3)[1,1], fixef(Model_size_3)[2,1], col = 6, lw = 2)
+ abline(fixef(habitat_model)[1,1], fixef(habitat_model)[2,1], col = 'blue', lw = 2)
 ```
 
 
-### STAN model
+2. STAN model
+
+Data considered
+
+```
+
+data {
+  int <lower=0> N; // number of data points
+  int <lower=0> K; // number of predictors
+  matrix[N,K] x; // predictor matrix
+  vector[N] y; // CFAR
+}
+```
+
+The parameters accepted by the model. 
+
+```
+parameters {
+  real alpha;
+  vector[K] beta;
+  real<lower=0> sigma;
+}
+```
+
+The model to be estimated. We model the output 'y' to be normally distributed with mean 'mu' and standard deviation 'sigma'.
+
+```
+model {
+
+  sigma ~ student_t(3, 0, 10);
+
+  y ~ normal(alpha + x * beta , sigma);
+}
+```
+
+```{r}
+fit6
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
+
+for (i in 1:500) {
+ abline(posterior6$alpha[i], posterior6[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+} 
+
+
+ abline(fixef(habitat_model)[1,1], fixef(habitat_model)[2,1], col = 'blue', lw = 2)
+
+abline(mean(posterior6$alpha), mean(posterior6[,2]), col = 'red', lw = 2)
+
+```
+
+\newpage
+
+## Model 5 - CFAR ~ GSH * PrimaryHabitat
+1. brms model
+```
+habitat_model_2 <- brm(Log10CFAR ~ Log10MeanGSH_centered * PrimaryHabitat,
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    prior = habitat_prior2,
+                    cores = 2)
+```
+```{r}
+summary(habitat_model_2)
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+for (i in 1:500) {
+ abline(fixef(habitat_model_2, summary = F)[i,1], fixef(habitat_model_2, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+ abline(fixef(habitat_model_2)[1,1], fixef(habitat_model_2)[2,1], col = 'blue', lw = 2)
+```
+
+2. STAN model
 
 TBD
 
-## Model 5 - CFAR ~ GSH + Phylogeny
+\newpage
 
-### PGLS model
+## Model 6 - CFAR ~ GSH + Phylogeny
+
+1. PGLS model
 ```
 pglsMod1 <- gls(Log10CFAR ~ Log10MeanGSH_centered, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
 ```
@@ -305,7 +395,7 @@ plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
 abline(a = coef(pglsMod1)[1], b = coef(pglsMod1)[2], col = 6, lw = 2)
 ```
 
-### brms model
+2. brms model
 ```
 Model_simple <- brm(Log10CFAR ~ Log10MeanGSH_centered + (1|gr(Binomial, cov = A)),
                     data = GSH_df_pgls,
@@ -327,10 +417,12 @@ for (i in 1:500) {
  abline(fixef(Model_simple, summary = F)[i,1], fixef(Model_simple, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
- abline(fixef(Model_simple)[1,1], fixef(Model_simple)[2,1], col = 6, lw = 2)
+abline(a = coef(pglsMod1)[1], b = coef(pglsMod1)[2], col = 6, lw = 2)
+
+ abline(fixef(Model_simple)[1,1], fixef(Model_simple)[2,1], col = 'blue', lw = 2)
 ```
 
-### STAN model
+3. STAN model
 
 
 Data considered
@@ -397,13 +489,20 @@ for (i in 1:200) {
  abline(posterior4$alpha[i], posterior4$beta[i], col = adjustcolor("gray", alpha = 0.15), lty = 1)
 } 
 
-abline(mean(posterior4$alpha), mean(posterior4$beta), col = 6, lw = 2)
+
+abline(a = coef(pglsMod1)[1], b = coef(pglsMod1)[2], col = 6, lw = 2)
+
+ abline(fixef(Model_simple)[1,1], fixef(Model_simple)[2,1], col = 'blue', lw = 2)
+
+abline(mean(posterior4$alpha), mean(posterior4$beta), col = 'red', lw = 2)
 
 ```
 
-## Model 5 - CFAR ~ GSH * Max Size + Phylogeny
+\newpage
 
-### PGLS model
+## Model 7 - CFAR ~ GSH * Max Size + Phylogeny
+
+1. PGLS model
 
 ```
 pglsMod2 <- gls(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
@@ -421,7 +520,7 @@ abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 6, lw = 2)
 ```
 
 
-### brms model
+2. brms model
 ```
 Model_BS <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered + (1|gr(Binomial, cov = A)),
                     data = GSH_df_pgls,
@@ -442,10 +541,12 @@ for (i in 1:500) {
  abline(fixef(Model_BS, summary = F)[i,1], fixef(Model_BS, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
- abline(fixef(Model_BS)[1,1], fixef(Model_BS)[2,1], col = 6, lw = 2)
+abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 6, lw = 2)
+
+ abline(fixef(Model_BS)[1,1], fixef(Model_BS)[2,1], col = 'blue', lw = 2)
 ```
 
-### STAN model
+3. STAN model
 
 Data considered
 
@@ -508,16 +609,23 @@ fit5
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
 
 for (i in 1:200) {
- abline(posterior5$alpha[i], posterior5$beta[i], col = adjustcolor("gray", alpha = 0.15), lty = 1)
+ abline(posterior5$alpha[i], posterior5[i,2], col = adjustcolor("gray", alpha = 0.15), lty = 1)
 } 
 
-abline(mean(posterior5$alpha), mean(posterior5$beta), col = 6, lw = 2)
+
+abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 6, lw = 2)
+
+ abline(fixef(Model_BS)[1,1], fixef(Model_BS)[2,1], col = 'blue', lw = 2)
+
+abline(mean(posterior5$alpha), mean(posterior5[,2]), col = 'red', lw = 2)
 
 ```
 
-## Model 6 - CFAR ~ GSH + Max Size + Phylogeny
+\newpage
 
-### PGLS model
+## Model 8 - CFAR ~ GSH + Max Size + Phylogeny
+
+1. PGLS model
 
 ```
 pglsMod3 <- gls(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
@@ -533,10 +641,38 @@ plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
 abline(a = coef(pglsMod3)[1], b = coef(pglsMod3)[2], col = 6, lw = 2)
 ```
 
-### brms model
+2. brms model
+```
+Model_BS <- brm(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered + (1|gr(Binomial, cov = A)),
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    data2 = list(A = A),
+                    prior = BS_prior,
+                sample_prior = TRUE, chains = 4, cores = 2)
+```
+
+```{r}
+summary(Model_BS2)
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+for (i in 1:500) {
+ abline(fixef(Model_BS, summary = F)[i,1], fixef(Model_BS, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+abline(a = coef(pglsMod3)[1], b = coef(pglsMod3)[2], col = 6, lw = 2)
+
+ abline(fixef(Model_BS2)[1,1], fixef(Model_BS2)[2,1], col = 'blue', lw = 2)
+```
+
+3. STAN model
 
 TBD
 
-### STAN model
+\newpage
 
-TBD
+## Model 9 - CFAR ~ GSH + PrimaryHabitat + Phylogeny
+## Model 10 - CFAR ~ GSH * PrimaryHabitat + Phylogeny
+## Model 11 - CFAR ~ GSH * MaxSize + PrimaryHabitat + Phylogeny
