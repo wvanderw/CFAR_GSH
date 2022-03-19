@@ -1,7 +1,7 @@
 # CFAR_GSH
 version control for first chapter -- will be duplicated for publication 
 
-It is now 1142 and the mac won't sync :pizza:
+Need to write file directory below :pizza:
 
 Mac version now running i hope :dancer:
 
