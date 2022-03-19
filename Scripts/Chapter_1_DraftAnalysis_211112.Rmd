@@ -164,7 +164,8 @@ GSH_df_pgls <- GSH_df_pgls %>%
   arrange(factor(GSH_df_pgls$Binomial, levels = target))
 
 #covariance matrix
-A <- ape::vcv.phylo(SampleTree)
+A <- ape::vcv.phylo(SampleTree, corr = TRUE)
+B <- ape::vcv(SampleTree, corr = TRUE)
 
 
 ```
