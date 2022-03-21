@@ -15,10 +15,11 @@ data {
 
 // The parameters accepted by the model. 
 parameters {
-  real alpha;
   vector[K] beta;
   real<lower=0> sigma;
 }
+
+
 
 // The model to be estimated. We model the output
 // 'y' to be normally distributed with mean 'mu'
@@ -27,7 +28,7 @@ model {
   
   sigma ~ student_t(3, 0, 10);
   
-  y ~ normal(alpha + x * beta , sigma);
+  y ~ normal(x * beta, sigma);
 }
 
 // need to redefine to keep for comaprison

@@ -97,7 +97,8 @@ model {
 }
 ```
 ```{r}
-
+fit1_summary <- summary(fit1, pars = c("alpha", "beta","sigma"), probs = c(0.05, 0.95))$summary
+print(fit1_summary)
 ```
 
 ```{r echo=FALSE}
@@ -173,20 +174,21 @@ model {
 ```
 
 ```{r}
-fit2
+fit2_summary <- summary(fit2, pars = c("beta[1]", "beta[2]","beta[3]","beta[4]","sigma"), probs = c(0.05, 0.95))$summary
+print(fit2_summary)
 ```
 
 ```{r echo=FALSE}
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
 
 for (i in 1:500) {
- abline(posterior2$alpha[i], posterior2[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+ abline(posterior2[i,1], posterior2[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 } 
 
  abline(fixef(Model_size)[1,1], fixef(Model_size)[2,1], col = 'blue', lw = 2)
 
 
-abline(mean(posterior2$alpha), mean(posterior2[,2]), col = 'red', lw = 2)
+abline(mean(posterior2[,1]), mean(posterior2[,2]), col = 'red', lw = 2)
 
 ```
 \newpage
