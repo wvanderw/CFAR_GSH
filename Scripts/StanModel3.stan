@@ -15,7 +15,6 @@ data {
 // The parameters accepted by the model. 
 
       parameters {
-        real alpha;
         vector[K] beta; // coefficients
         real<lower=0> sigma; // error
         real<lower=0,upper=1> lambda; // phylogenetic signal
@@ -27,7 +26,6 @@ data {
         matrix[N, N] sigma_mat;
         matrix[N, N] sigma_total;
         
-        vector[N] mu_y;
         
 
         sigma_mat = (1-lambda)*d_mat + lambda*A;
@@ -46,7 +44,7 @@ model {
   lambda ~ uniform(0,1);
   sigma ~ student_t(3, 0, 2.5);
   
-  y ~ multi_normal(alpha + x * beta, sigma_total);
+  y ~ multi_normal(x * beta, sigma_total);
 }
 
 // need to redefine to keep for comaprison

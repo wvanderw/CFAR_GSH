@@ -29,7 +29,7 @@ library(here)
 library(readxl)
 library(StanHeaders)
 library(brms)
-
+#library(kable)
 library(rstan)
 library(gdata)
 library(bayesplot)
@@ -254,7 +254,8 @@ model {
 ```
 
 ```{r}
-fit3
+fit3_summary <- summary(fit3, pars = c("beta[1]", "beta[2]","sigma"), probs = c(0.05, 0.95))$summary
+print(fit3_summary)
 ```
 
 ```{r echo=FALSE}
@@ -334,20 +335,22 @@ model {
 ```
 
 ```{r}
-fit6
+fit6_summary <- summary(fit6, pars = c("beta[1]", "beta[2]","beta[3]","beta[4]", "sigma"), probs = c(0.05, 0.95))$summary
+print(fit6_summary)
+
 ```
 
 ```{r echo=FALSE}
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
 
 for (i in 1:500) {
- abline(posterior6$alpha[i], posterior6[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+ abline(posterior6[i,1], posterior6[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 } 
 
 
  abline(fixef(habitat_model)[1,1], fixef(habitat_model)[2,1], col = 'blue', lw = 2)
 
-abline(mean(posterior6$alpha), mean(posterior6[,2]), col = 'red', lw = 2)
+abline(mean(posterior6[,1]), mean(posterior6[,2]), col = 'red', lw = 2)
 
 ```
 
@@ -378,7 +381,57 @@ for (i in 1:500) {
 
 2. STAN model
 
-TBD
+Data considered
+
+```
+
+data {
+  int <lower=0> N; // number of data points
+  int <lower=0> K; // number of predictors
+  matrix[N,K] x; // predictor matrix
+  vector[N] y; // CFAR
+}
+```
+
+The parameters accepted by the model. 
+
+```
+parameters {
+  real alpha;
+  vector[K] beta;
+  real<lower=0> sigma;
+}
+```
+
+The model to be estimated. We model the output 'y' to be normally distributed with mean 'mu' and standard deviation 'sigma'.
+
+```
+model {
+
+  sigma ~ student_t(3, 0, 10);
+
+  y ~ normal(alpha + x * beta , sigma);
+}
+```
+
+```{r}
+fit7_summary <- summary(fit7, pars = c("beta[1]", "beta[2]","beta[3]","beta[4]", "sigma"), probs = c(0.05, 0.95))$summary
+print(fit7_summary)
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
+
+for (i in 1:500) {
+ abline(posterior7[i,1], posterior7[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+} 
+
+
+ abline(fixef(habitat_model_2)[1,1], fixef(habitat_model_2)[2,1], col = 'blue', lw = 2)
+
+abline(mean(posterior7[,1]), mean(posterior7[,2]), col = 'red', lw = 2)
+
+```
 
 \newpage
 

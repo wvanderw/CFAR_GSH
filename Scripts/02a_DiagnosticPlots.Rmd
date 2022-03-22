@@ -1,0 +1,23 @@
+---
+title: "Diagnostics"
+author: "Wade VanderWright"
+date: '2022-03-22'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+GLS diagnostic plots
+(<https://stat.ethz.ch/R-manual/R-devel/library/nlme/html/plot.gls.html>)
+
+```{r}
+plot(pglsMod1, resid(., type = 'p') ~ fitted(.), abline = 0)
+```
+
+
+```{r}
+qqnorm(pglsMod1, abline = c(0,1))
+```
+
