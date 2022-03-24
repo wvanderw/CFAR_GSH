@@ -621,11 +621,7 @@ posterior2 <- as.data.frame(fit2)
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
 
 
-for (i in 1:500) {
- abline(posterior$alpha[i], posterior$beta[i], col = "gray", lty = 1)
-}
 
-abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
 
 for (i in 1:500) {
  abline(posterior2[i,1], posterior2[i,2], col = "gray", lty = 1)
@@ -633,7 +629,6 @@ for (i in 1:500) {
 
 abline(mean(posterior2[,1]), mean(posterior2[,2]), col = 'blue', lw = 2)
 
-abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 2, lty = 2, lw = 5)
 ```
 
 ## STAN model comparison 3
@@ -677,7 +672,6 @@ for (i in 1:500) {
 
 abline(mean(posterior3[,1]), mean(posterior3[,2]), col = 'blue', lw = 2)
 
-abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 2, lty = 2, lw = 5)
 ```
 
 
@@ -703,7 +697,7 @@ fit4 <- stan(file = './StanModel3.stan', data = stan_data4, warmup = 500, iter =
 ```
 
 ```{r}
-posterior4 <- extract(fit4)
+posterior4 <- as.data.frame(fit4)
 ```
 
 
@@ -711,35 +705,13 @@ posterior4 <- extract(fit4)
 plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
 
 
-for (i in 1:500) {
- abline(posterior$alpha[i], posterior$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+for (i in 1:100) {
+ abline(posterior4[i,1], posterior4[i,2], col = "gray", lty = 1)
 }
 
+abline(mean(posterior4[,1]), mean(posterior4[,2]), col = 'blue', lw = 2)
 
-
-for (i in 1:500) {
- abline(posterior2$alpha[i], posterior2$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
-
-
-for (i in 1:500) {
- abline(posterior3$alpha[i], posterior3$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
-for (i in 1:200) {
- abline(posterior4$alpha[i], posterior4$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
-abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
-
-abline(mean(posterior2$alpha), mean(posterior2$beta), col = 'blue', lw = 2)
-
-abline(mean(posterior3$alpha), mean(posterior3$beta), col = 'green', lw = 2)
-
-abline(mean(posterior4$alpha), mean(posterior4$beta), col = 'red', lw = 2)
-
-abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = "black", lty = 2, lw = 5)
+abline(a = coef(pglsMod1)[1], b = coef(pglsMod1)[2], col = 2, lty = 2, lw = 5)
 ```
 
 
@@ -773,14 +745,12 @@ posterior5 <- as.data.frame(fit5)
 #STAN Model 6 (CFAR ~ GSH + PrimaryHabitat)
 ```{r}
 ## Stan Model 6 -- Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat
-data_matrix_6 <- model.matrix(~ Log10MeanGSH_centered + PrimaryHabitat, data = GSH_df_pgls)
-
 
 #data
 N <- length(GSH_df_pgls$Binomial)
+K <- 2
 y <- GSH_df_pgls$Log10CFAR
-x <- data_matrix_6
-K <- ncol(x)
+x <- matrix(c(GSH_df_pgls$Log10MeanGSH_centered, GSH_df_pgls$PrimaryHabitat), ncol = 2, byrow = F)
 
 stan_data6 <- list(N=N,K=K,y=y,x=x)
 
@@ -792,6 +762,7 @@ fit6 <- stan(file = './StanModel2.stan', data = stan_data6, warmup = 500, iter =
 
 
 ```{r}
+fit6
 posterior6 <- as.data.frame(fit6)
 ```
 
@@ -812,28 +783,28 @@ for (i in 1:500) {
 
 
 for (i in 1:500) {
- abline(posterior3[i,1], posterior3[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+ abline(posterior3$alpha[i], posterior3$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
 }
 
 abline(mean(posterior$alpha), mean(posterior$beta), col = 6, lw = 2)
 
-abline(mean(posterior2[,1]), mean(posterior2[,2]), col = 'blue', lw = 2)
+abline(mean(posterior2$alpha), mean(posterior2$beta), col = 'blue', lw = 2)
 
-abline(mean(posterior6[,1]), mean(posterior6[,2]), col = 'green', lw = 2)
+abline(mean(posterior6$alpha), mean(posterior6[,2]), col = 'green', lw = 2)
 
 
-abline(a = coef(pglsMod5)[1], b = coef(pglsMod5)[2], col = 2, lty = 2, lw = 5)
+abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 2, lty = 2, lw = 5)
 ```
 
 #STAN Model 7 (CFAR ~ GSH * PrimaryHabitat)
 ```{r}
-data_matrix_7 <- model.matrix(~ Log10MeanGSH_centered * PrimaryHabitat, data = GSH_df_pgls)
+## Stan Model 6 -- Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat
 
 #data
 N <- length(GSH_df_pgls$Binomial)
+K <- 3
 y <- GSH_df_pgls$Log10CFAR
-x <- data_matrix_7
-K <- ncol(x)
+x <- matrix(c(GSH_df_pgls$Log10MeanGSH_centered, GSH_df_pgls$PrimaryHabitat,(GSH_df_pgls$Log10MeanGSH_centered* GSH_df_pgls$PrimaryHabitat)), ncol = 3, byrow = F)
 
 stan_data7 <- list(N=N,K=K,y=y,x=x)
 
@@ -845,7 +816,8 @@ fit7 <- stan(file = './StanModel2.stan', data = stan_data6, warmup = 500, iter =
 
 
 ```{r}
-posterior7 <- as.data.frame(fit7)
+fit7
+posterior7 <- extract(fit7)
 ```
 
 #Lambda and residuals (quick and dirty)
