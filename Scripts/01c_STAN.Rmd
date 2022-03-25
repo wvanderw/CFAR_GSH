@@ -1,0 +1,27 @@
+---
+title: "01c_STAN"
+author: "Wade VanderWright"
+date: '2022-03-24'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###01_a -- PGLS Models for Ch. 1
+## VanderWright, WJ
+## March 24, 2022
+
+## Model 1 - CFAR ~ GSH
+## Model 2 - CFAR ~ GSH * Max Size
+## Model 3 - CFAR ~ GSH + Max Size (No interaction)
+## Model 4 - CFAR ~ GSH + PrimaryHabitat (No interaction)
+## Model 5 - CFAR ~ GSH * PrimaryHabitat
+## Model 6 - CFAR ~ GSH + Phylogeny
+## Model 7 - CFAR ~ GSH * Max Size + Phylogeny
+## Model 8 - CFAR ~ GSH + Max Size + Phylogeny
+## Model 9 - CFAR ~ GSH + PrimaryHabitat + Phylogeny
+## Model 10 - CFAR ~ GSH * PrimaryHabitat + Phylogeny
+## Model 11 - CFAR ~ GSH * MaxSize + PrimaryHabitat + Phylogeny
+

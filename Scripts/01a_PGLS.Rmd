@@ -13,6 +13,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ## VanderWright, WJ
 ## March 16, 2022
 
+
+
+
+
 #Model 5 - CFAR ~ GSH + tree
 
 ```{r}
@@ -25,7 +29,13 @@ summary(pglsMod1)
 ```{r}
 plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch=20)
 abline(a = coef(pglsMod1)[1], b = coef(pglsMod1)[2], col = 6, lw = 2)
+abline(a = confint(pglsMod1)[1,1], b = confint(pglsMod1)[2,1], col = 'blue', lw = 1)
+abline(a = confint(pglsMod1)[1,1], b = confint(pglsMod1)[2,2], col = 'red', lw = 1)
+abline(a = confint(pglsMod1)[1,2], b = confint(pglsMod1)[2,1], col = 'blue', lw = 1)
+abline(a = confint(pglsMod1)[1,2], b = confint(pglsMod1)[2,2], col = 'red', lw = 1)
+
 ```
+
 
 #Model 6 - CFAR ~ GSH * MaxSize + tree
 ```{r}
@@ -73,6 +83,7 @@ abline(a = (coef(pglsMod5)[1] + coef(pglsMod5)[4]),
        col = 'green', lw =2)
 
 ```
+
 #Model 9 - CFAR ~ GSH * PrimaryHabitat + tree
 ```{r}
 pglsMod6 <- gls(Log10CFAR ~ Log10MeanGSH_centered * PrimaryHabitat, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
@@ -88,7 +99,8 @@ abline(a = coef(pglsMod6)[1],
        col = 6, lw = 2)
 #deepwater (a = 1 + 3, b = 2 + 5)
 abline(a = coef(pglsMod6)[1] + coef(pglsMod6)[3], 
-       b = coef(pglsMod6)[2] + coef(pglsMod6)[5], col = 'blue', lw =2)
+       b = coef(pglsMod6)[2] + coef(pglsMod6)[5], 
+       col = 'blue', lw =2)
 #pelagic (a = 1 + 4, b = 2 + 6)       
 abline(a = (coef(pglsMod6)[1] + coef(pglsMod6)[4]), 
        b = (coef(pglsMod6)[2] + coef(pglsMod6)[6]), 
@@ -98,6 +110,61 @@ abline(a = (coef(pglsMod6)[1] + coef(pglsMod6)[4]),
 
 
 #Model 10 - CFAR ~ GSH + MaxSize + PrimaryHabitat + tree
+```{r}
+pglsMod7 <- gls(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered + PrimaryHabitat, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
+
+summary(pglsMod7)
+```
+
+```{r}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+#coastal (a = 1, b = 2)
+abline(a = coef(pglsMod7)[1], 
+       b = coef(pglsMod7)[2], 
+       col = 'black', lw = 2)
+#deepwater (a = 1 + 3, b = 2 + 5)
+abline(a = coef(pglsMod7)[1] + coef(pglsMod7)[3], 
+       b = coef(pglsMod7)[2], 
+       col = 'blue', lw =2)
+#pelagic (a = 1 + 4, b = 2 + 6)       
+abline(a = (coef(pglsMod7)[1] + coef(pglsMod7)[4]), 
+       b = (coef(pglsMod7)[2]), 
+       col = 'green', lw =2)
+#max size
+abline(a = (coef(pglsMod7)[1] + coef(pglsMod7)[5]), 
+       b = (coef(pglsMod7)[2]), 
+       col = 'red', lw =2)
+```
+
 
 #Model 11 - CFAR ~ GSH * MaxSize + PrimaryHabitat + tree
+```{r}
+pglsMod8 <- gls(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered + PrimaryHabitat, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
 
+summary(pglsMod8)
+```
+
+```{r}
+plot(pglsMod8)
+```
+
+
+```{r}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+#coastal (a = 1, b = 2)
+abline(a = coef(pglsMod8)[1], 
+       b = coef(pglsMod8)[2], 
+       col = 'black', lw = 2)
+#deepwater (a = 1 + 3, b = 2 + 5)
+abline(a = coef(pglsMod7)[1] + coef(pglsMod7)[3], 
+       b = coef(pglsMod7)[2], 
+       col = 'blue', lw =2)
+#pelagic (a = 1 + 4, b = 2 + 6)       
+abline(a = (coef(pglsMod7)[1] + coef(pglsMod7)[4]), 
+       b = (coef(pglsMod7)[2]), 
+       col = 'green', lw =2)
+#max size
+abline(a = (coef(pglsMod7)[1] + coef(pglsMod7)[5]), 
+       b = (coef(pglsMod7)[2]), 
+       col = 'red', lw =2)
+```

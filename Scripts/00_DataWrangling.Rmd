@@ -1,0 +1,14 @@
+---
+title: "00_DataWrangling"
+author: "Wade VanderWright"
+date: '2022-03-24'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###00 -- Data cleaning and wrangling for Ch. 1
+## VanderWright, WJ
+## March 16, 2022

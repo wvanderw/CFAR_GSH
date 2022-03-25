@@ -122,7 +122,8 @@ GSH_df <- GSH_df %>%
 #center the Log10 Mean GSH column
 y <- mean(GSH_df$Log10MeanGSH)
 GSH_df$Log10MeanGSH_centered <- center_scale(GSH_df$Log10MeanGSH, y)
-#
+#force numeric
+GSH_df$Log10MeanGSH_centered <- as.numeric(GSH_df$Log10MeanGSH_centered)
 
 
 
@@ -357,7 +358,9 @@ plot(conditional_effects(Model_size_2), points = TRUE) #hit enter in the console
 ```
 
 ## BRMS no tree, with body size as additional predictor (intercept only)
-```{r}
+
+NOT USED**
+```
 Size_prior_3 <- get_prior(Log10CFAR ~ Log10MeanGSH_centered + (1|Log10MaxSize_centered),
                     data = GSH_df_pgls,
                     family = gaussian())
@@ -370,14 +373,12 @@ Model_size_3 <- brm(Log10CFAR ~ Log10MeanGSH_centered + (1|Log10MaxSize_centered
                     control = list(adapt_delta = 0.9))
 
 summary(Model_size_3)
-```
 
-```{r}
+
+
 plot(conditional_effects(Model_size_3), points = TRUE) #hit enter in the console
-
-
-
 ```
+
 
 ##BRMS with habitat type (No interaction)
 ```{r}
