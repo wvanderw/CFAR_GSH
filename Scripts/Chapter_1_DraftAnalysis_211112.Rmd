@@ -13,7 +13,8 @@ knitr::opts_chunk$set(echo = FALSE)
 ## Set up
 ```{r}
 ##Install packages
-#install.packages(c('ape','phytools','nlme','tidyverse','gieger','xlsx','here','readxl','brms','rstan','gdata','bayesplot','StanHeaders', 'caper'))
+#install.packages(c('ape','phytools','nlme','tidyverse','gieger','xlsx','here',
+#'readxl','brms','rstan','gdata','bayesplot','StanHeaders', 'caper'))
 
 
 ##Load Packages

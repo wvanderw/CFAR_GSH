@@ -12,3 +12,171 @@ knitr::opts_chunk$set(echo = TRUE)
 ###00 -- Data cleaning and wrangling for Ch. 1
 ## VanderWright, WJ
 ## March 16, 2022
+
+## Set up
+```{r}
+##Install packages
+#install.packages(c('ape','phytools','nlme','tidyverse','gieger','xlsx','here',
+#'readxl','brms','rstan','gdata','bayesplot','StanHeaders', 'caper'))
+
+
+##Load Packages
+library(ape)
+library(phytools)
+library(nlme)
+#library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(geiger)
+#library(caper)
+#library(xlsx)
+library(here)
+library(readxl)
+library(StanHeaders)
+library(brms)
+
+library(rstan)
+library(gdata)
+library(bayesplot)
+
+
+##Preload functions
+# 'Not in' function
+'%nin%' <- Negate('%in%')
+
+# Caudal fin aspect ratio function
+caudal_fin <- function(height, area) {
+  aspect_ratio <- (height^2 / area)
+  return(aspect_ratio)
+}
+
+#Centering data function
+center_scale <- function(x, y){
+  scale(x, center = y, scale = FALSE)
+}
+
+#Run this and skip to line 348
+load(here('./Data/Output/CurrentDataState.RData'))
+
+
+```
+
+##Load & Clean Data 
+```{r}
+getwd()
+
+#load last workspace above and skip this ^^^^
+#
+
+# GSH Data ####
+GSH_df <- read.csv(here('Data', 'Input', 'SharkGillSlitActivity210331 - Sheet1.csv'), header = T)
+#drop NAs
+GSH_df <- GSH_df %>% drop_na(GS1_proportionTL)
+#create binomial
+GSH_df <- GSH_df %>% 
+  rowwise() %>% 
+  mutate(Binomial = paste(Genus, Species, sep = '_'))
+#force as character
+GSH_df$Binomial <- as.character(GSH_df$Binomial)
+#arrange by binomial
+GSH_df <- GSH_df %>% 
+  arrange(Binomial)
+#Calculate the mean GSH per species
+GSH_df <- GSH_df %>% 
+  rowwise() %>% 
+  mutate("MeanGSH" = mean(c(GS1_proportionTL, GS2_proportionTL, GS3_proportionTL, GS4_proportionTL, GS5_proportionTL, GS6_proportionTL, GS7_proportionTL), na.rm = TRUE))
+#create Caudal fin aspect ratios and Log10 columns for desired variables 
+GSH_df <- GSH_df %>%
+  rowwise() %>% 
+  mutate("CaudalAspect_proportion_TL" = caudal_fin(TailHeight_proportionTL, TailArea_proportionTL)) %>% 
+  mutate(Log10MeanGSH = log10(MeanGSH)) %>% 
+  mutate(Log10CFAR = log10(CaudalAspect_proportion_TL))
+#update taxonomy to match
+GSH_df[(GSH_df$Binomial == 'Deania_quadrispinosum'), 'Binomial'] <- 'Deania_quadrispinosa'
+GSH_df[(GSH_df$Binomial == 'Ctenacis_fehlmani'), 'Binomial'] <- 'Ctenacis_fehlmanni' 
+GSH_df[(GSH_df$Binomial == 'Hemitriakis_leucoperitera'), 'Binomial'] <- 'Hemitriakis_leucoperiptera'
+GSH_df[(GSH_df$Binomial == 'Lamiopsis_temmincki'), 'Binomial'] <- 'Lamiopsis_temminckii'
+GSH_df[(GSH_df$Binomial == 'Carcharhinus_perezi'), 'Binomial'] <- 'Carcharhinus_perezii'
+GSH_df[(GSH_df$Binomial == 'Chiloscyllium_hasselti'), 'Binomial'] <- 'Chiloscyllium_hasseltii'
+
+
+# Depth and habitat Data####
+#load data
+Habitat <- read_excel(here('./Data/Input/Habitat_species_corrected_210512.xlsx'), sheet = "Current")
+#update taxonomy to match
+Habitat[(Habitat$Genus_species == 'Carcharhinus_perezi'), 'Genus_species'] <- 'Carcharhinus_perezii'
+Habitat[(Habitat$Genus_species == 'Chiloscyllium_hasselti'), 'Genus_species'] <- 'Chiloscyllium_hasseltii'
+#filter to match species
+Habitat <- Habitat %>% 
+  filter(Genus_species %in% GSH_df$Binomial)
+#arrange by binomial
+Habitat <- Habitat %>% 
+  arrange(Genus_species)
+#save missing species for later
+missing.habitat <- GSH_df[(GSH_df$Binomial %nin% Habitat$Genus_species),]
+#trim unused columns from habitat sheet
+Habitat <- Habitat[,c(10,22,23,29,33,34)]
+#join dataframes
+GSH_df <- left_join(GSH_df, Habitat, by = c('Binomial' = 'Genus_species'))
+GSH_df$MaxLinearDimension <- as.numeric(GSH_df$MaxLinearDimension)
+#Log the maximum size column
+GSH_df <- GSH_df %>% 
+  rowwise() %>% 
+  mutate(Log10MaxSize = log10(MaxLinearDimension))
+#center the Log10 Mean GSH column
+y <- mean(GSH_df$Log10MeanGSH)
+GSH_df$Log10MeanGSH_centered <- center_scale(GSH_df$Log10MeanGSH, y)
+#force numeric
+GSH_df$Log10MeanGSH_centered <- as.numeric(GSH_df$Log10MeanGSH_centered)
+
+
+
+###Phylo Data####
+#read in the 10000 trees
+FullTree <- read.nexus(here('./Data/Input/10.cal.tree.nex'))
+#se the seed for reproduciblility
+set.seed(11)
+#sample out a tree
+SampleTree <- sample(FullTree, 1)
+SampleTree <- SampleTree$UNTITLED
+#check if tips are binary
+is.binary(SampleTree)
+#check where the tree and dataset differ
+namedrops <- name.check(SampleTree, GSH_df, GSH_df$Binomial)
+#drop the tips that are in the tree and not in the data (all the rays)
+SampleTree <- drop.tip(SampleTree, namedrops$tree_not_data)
+#drop the species in the dataset that are not in the tree
+GSH_df_pgls <- subset(GSH_df, GSH_df$Binomial %nin% namedrops$data_not_tree) 
+
+#center the Log10 Max Size column
+z <- mean(GSH_df_pgls$Log10MaxSize)
+GSH_df_pgls$Log10MaxSize_centered <- center_scale(GSH_df_pgls$Log10MaxSize, z)
+GSH_df_pgls$Log10MaxSize_centered <- as.numeric(GSH_df_pgls$Log10MaxSize_centered)
+
+#change depth data to numeric (will have to drop NAs in depth models)
+GSH_df_pgls$DepthMax_m_text <- as.numeric(GSH_df_pgls$DepthMax_m_text)
+
+GSH_df_pgls$DepthMin_m_text <- as.numeric(GSH_df_pgls$DepthMin_m_text)
+
+#change habitats to factor
+GSH_df_pgls$PrimaryHabitat <- as.factor(GSH_df_pgls$PrimaryHabitat)
+#add contrast structure
+contrasts(GSH_df_pgls$PrimaryHabitat) = contr.treatment(3)
+
+#order dataframe to match tree tip labels
+target <- SampleTree$tip.label
+
+GSH_df_pgls <- GSH_df_pgls %>% 
+  arrange(factor(GSH_df_pgls$Binomial, levels = target))
+
+#covariance matrix
+A <- ape::vcv.phylo(SampleTree, corr = TRUE)
+B <- ape::vcv(SampleTree, corr = TRUE)
+
+
+```
+
+## Plot the Tree
+```{r}
+plot(SampleTree, type = 'fan', show.tip=F, edge.color = rainbow(1200))
+```

@@ -15,6 +15,20 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+options(knitr.table.format = function() {
+  if (knitr::is_latex_output())
+    "latex" else "pipe"
+})
+
+Table_fun <- function(x){
+
+table <- cbind(summary(x)$tTable, confint(x))
+
+knitr::kable(table, caption = "PGLS summary")
+
+}
+
+
 ##Load Packages
 library(ape)
 library(phytools)
@@ -53,7 +67,9 @@ Model_plain <- brm(Log10CFAR ~ Log10MeanGSH_centered,
 ```
 
 ```{r }
-fixef(Model_plain, summary = T)
+knitr::kable(fixef(Model_plain, summary = T))
+
+
 ```
 
 
@@ -96,9 +112,12 @@ model {
   y ~ normal(alpha + x * beta , sigma);
 }
 ```
+```{r echo=FALSE}
+fit1_summary <- summary(fit1, pars = c("alpha", "beta","sigma"), probs = c(0.025, 0.975))$summary
+```
+
 ```{r}
-fit1_summary <- summary(fit1, pars = c("alpha", "beta","sigma"), probs = c(0.05, 0.95))$summary
-print(fit1_summary)
+knitr::kable(fit1_summary, caption = 'STAN model summary')
 ```
 
 ```{r echo=FALSE}
@@ -173,9 +192,13 @@ model {
 }
 ```
 
+```{r echo=FALSE}
+fit2_summary <- summary(fit2, pars = c("beta[1]", "beta[2]","beta[3]","beta[4]","sigma"), probs = c(0.025, 0.975))$summary
+
+```
+
 ```{r}
-fit2_summary <- summary(fit2, pars = c("beta[1]", "beta[2]","beta[3]","beta[4]","sigma"), probs = c(0.05, 0.95))$summary
-print(fit2_summary)
+knitr::kable(fit2_summary, caption = 'STAN model summary')
 ```
 
 ```{r echo=FALSE}
@@ -254,8 +277,11 @@ model {
 ```
 
 ```{r}
-fit3_summary <- summary(fit3, pars = c("beta[1]", "beta[2]","sigma"), probs = c(0.05, 0.95))$summary
-print(fit3_summary)
+fit3_summary <- summary(fit3, pars = c("beta[1]", "beta[2]","sigma"), probs = c(0.025, 0.975))$summary
+```
+
+```{r}
+knitr::kable(fit3_summary, caption = 'STAN model summary')
 ```
 
 ```{r echo=FALSE}
@@ -441,8 +467,11 @@ abline(mean(posterior7[,1]), mean(posterior7[,2]), col = 'red', lw = 2)
 ```
 pglsMod1 <- gls(Log10CFAR ~ Log10MeanGSH_centered, correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), data = GSH_df_pgls, method = "ML")
 ```
-```{r}
-summary(pglsMod1)
+
+```{r echo=FALSE}
+
+Table_fun(pglsMod1)
+
 ```
 
 ```{r echo=FALSE}
@@ -565,7 +594,7 @@ pglsMod2 <- gls(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered, corre
 
 
 ```{r}
-summary(pglsMod2)
+Table_fun(pglsMod2)
 ```
 
 ```{r echo=FALSE}
@@ -687,7 +716,7 @@ pglsMod3 <- gls(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered, corre
 ```
 
 ```{r}
-summary(pglsMod3)
+Table_fun(pglsMod3)
 ```
 
 ```{r echo=FALSE}
@@ -800,5 +829,148 @@ abline(mean(posterior3$alpha), mean(posterior3[,2]), col = 'red', lw = 2)
 \newpage
 
 ## Model 9 - CFAR ~ GSH + PrimaryHabitat + Phylogeny
+1. PGLS model
+```
+pglsMod5 <- gls(Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat, 
+                correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial), 
+                data = GSH_df_pgls, method = "ML")
+```
+
+```{r}
+summary(pglsMod5)
+```
+
+
+```{r echo=FALSE}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+
+abline(a = coef(pglsMod5)[1], b = coef(pglsMod5)[2], col = 6, lw = 2)
+```
+2. brms model
+```
+HabitatPhylo <- brm(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered + (1|gr(Binomial, cov = A)),
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    data2 = list(A = A),
+                    prior = BS_prior2,
+                sample_prior = TRUE, chains = 4, cores = 2)
+```
+
+```{r}
+summary(HabitatPhylo)
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+for (i in 1:500) {
+ abline(fixef(HabitatPhylo, summary = F)[i,1], fixef(HabitatPhylo, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+abline(a = coef(pglsMod5)[1], b = coef(pglsMod5)[2], col = 6, lw = 2)
+
+ abline(fixef(HabitatPhylo)[1,1], fixef(HabitatPhylo)[2,1], col = 'blue', lw = 2)
+```
+
+3. STAN Model
+
+\newpage
+
 ## Model 10 - CFAR ~ GSH * PrimaryHabitat + Phylogeny
+1. PGLS model
+
+```
+pglsMod6 <- gls(Log10CFAR ~ Log10MeanGSH_centered * PrimaryHabitat, 
+                correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial),
+                data = GSH_df_pgls, method = "ML")
+
+```
+
+```{r echo=FALSE}
+Table_fun(pglsMod6)
+```
+
+```{r echo=FALSE}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+
+abline(a = coef(pglsMod6)[1], b = coef(pglsMod6)[2], col = 6, lw = 2)
+```
+
+2. BRMS Model
+```
+HabitatPhylo2 <- brm(Log10CFAR ~ Log10MeanGSH_centered * PrimaryHabitat + (1|gr(Binomial, cov = A)),
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    data2 = list(A = A),
+                    prior = HabitatPhylo_prior2,
+                sample_prior = TRUE, chains = 4, cores = 4)
+          
+```
+
+
+```{r}
+summary(HabitatPhylo2)
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+for (i in 1:500) {
+ abline(fixef(HabitatPhylo2, summary = F)[i,1], fixef(HabitatPhylo2, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+abline(a = coef(pglsMod6)[1], b = coef(pglsMod6)[2], col = 6, lw = 2)
+
+ abline(fixef(HabitatPhylo2)[1,1], fixef(HabitatPhylo2)[2,1], col = 'blue', lw = 2)
+```
+
+3. STAN Model
+
+\newpage
 ## Model 11 - CFAR ~ GSH * MaxSize + PrimaryHabitat + Phylogeny
+1. PGLS model
+
+```
+pglsMod8 <- gls(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered + PrimaryHabitat, 
+                correlation = corPagel(phy = SampleTree, value = 0.5, fixed = F, form = ~Binomial),
+                data = GSH_df_pgls, method = "ML")
+```
+
+```{r echo=FALSE}
+Table_fun(pglsMod8)
+```
+
+```{r echo=FALSE}
+plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
+
+abline(a = coef(pglsMod8)[1], b = coef(pglsMod8)[2], col = 6, lw = 2)
+```
+
+
+2. BRMS Model
+```
+SizeHabitatModel <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered + PrimaryHabitat + (1|gr(Binomial, cov = A)),
+                    data = GSH_df_pgls,
+                    family = gaussian(),
+                    data2 = list(A = A),
+                    prior = SizeHabitatMod_prior,
+                sample_prior = TRUE, chains = 4, cores = 4)
+```
+
+```{r}
+summary(SizeHabitatModel)
+```
+
+```{r echo=FALSE}
+plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
+
+for (i in 1:500) {
+ abline(fixef(SizeHabitatModel, summary = F)[i,1], fixef(SizeHabitatModel, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+abline(a = coef(pglsMod8)[1], b = coef(pglsMod8)[2], col = 6, lw = 2)
+
+ abline(fixef(SizeHabitatModel)[1,1], fixef(SizeHabitatModel)[2,1], col = 'blue', lw = 2)
+```
+
+3. STAN Model
