@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 options(knitr.table.format = function() {
   if (knitr::is_latex_output())
-    "latex" else "pipe"
+    "pipe" else "simple"
 })
 
 Table_fun <- function(x){
@@ -28,6 +28,50 @@ knitr::kable(table, caption = "PGLS summary")
 
 }
 
+
+Plot_brms <- function(x, y =NULL){
+  plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20,
+       main = paste("Correlation=", cor(GSH_df_pgls$Log10CFAR, GSH_df_pgls$Log10MeanGSH_centered)),
+       xlab = "Log10 GSH (proportion of TL)",
+       ylab = "Log10 CFAR")
+
+abline(a = coef(y)[1], b = coef(y)[2], col = 6, lw = 2)
+
+  
+for (i in 1:500) {
+ abline(fixef(x, summary = F)[i,1], fixef(x, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+ abline(fixef(x)[1,1], fixef(x)[2,1], col = 'blue', lw = 2)
+  
+}
+
+Plot_stan <- function(x,y,z=NULL){
+    plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20,
+       main = paste("Correlation=", cor(GSH_df_pgls$Log10CFAR, GSH_df_pgls$Log10MeanGSH_centered)),
+       xlab = "Log10 GSH (proportion of TL)",
+       ylab = "Log10 CFAR")
+  
+abline(a = coef(z)[1], b = coef(z)[2], col = 6, lw = 2)
+  
+  
+  for (i in 1:200) {
+ abline(x[i,1], x[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
+}
+
+abline(fixef(y)[1,1], fixef(y)[2,1], col = 'blue', lw = 2)
+
+abline(mean(x[,1]), mean(x[,2]), col = 'red', lw = 2)
+}
+
+Plot_pgls <- function(x){
+   plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20,
+       main = paste("Correlation=", cor(GSH_df_pgls$Log10CFAR, GSH_df_pgls$Log10MeanGSH_centered)),
+       xlab = "Log10 GSH (proportion of TL)",
+       ylab = "Log10 CFAR")
+  
+  abline(a = coef(x)[1], b = coef(x)[2], col = 6, lw = 2)
+}
 
 ##Load Packages
 library(ape)
@@ -74,14 +118,8 @@ knitr::kable(fixef(Model_plain, summary = T))
 
 
 ```{r echo=FALSE}
+Plot_brms(Model_plain)
 
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
-
-for (i in 1:500) {
- abline(fixef(Model_plain, summary = F)[i,1], fixef(Model_plain, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
- abline(fixef(Model_plain)[1,1], fixef(Model_plain)[2,1], col = 'blue', lw = 2)
 ```
 
 
@@ -121,15 +159,7 @@ knitr::kable(fit1_summary, caption = 'STAN model summary')
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
-
-for (i in 1:500) {
- abline(posterior$alpha[i], posterior$beta[i], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
-abline(fixef(Model_plain)[1,1], fixef(Model_plain)[2,1], col = 6, lw = 2)
-
-abline(mean(posterior$alpha), mean(posterior$beta), col = 'red', lw = 1)
+Plot_stan(posterior, Model_plain)
 ```
 \newpage
 
@@ -148,13 +178,7 @@ fixef(Model_size, summary = T)
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
-
-for (i in 1:500) {
- abline(fixef(Model_size, summary = F)[i,1], fixef(Model_size, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
- abline(fixef(Model_size)[1,1], fixef(Model_size)[2,1], col = 'blue', lw = 2)
+Plot_brms(Model_size)
 ```
 
 
@@ -202,16 +226,7 @@ knitr::kable(fit2_summary, caption = 'STAN model summary')
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
-
-for (i in 1:500) {
- abline(posterior2[i,1], posterior2[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-} 
-
- abline(fixef(Model_size)[1,1], fixef(Model_size)[2,1], col = 'blue', lw = 2)
-
-
-abline(mean(posterior2[,1]), mean(posterior2[,2]), col = 'red', lw = 2)
+Plot_stan(posterior2, Model_size)
 
 ```
 \newpage
@@ -231,13 +246,7 @@ summary(Model_size_2)
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
-
-for (i in 1:500) {
- abline(fixef(Model_size_2, summary = F)[i,1], fixef(Model_size_2, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
- abline(fixef(Model_size_2)[1,1], fixef(Model_size_2)[2,1], col = 'blue', lw = 2)
+Plot_brms(Model_size_2)
 ```
 
 2. STAN model
@@ -285,17 +294,7 @@ knitr::kable(fit3_summary, caption = 'STAN model summary')
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
-
-for (i in 1:500) {
- abline(posterior3$alpha[i], posterior3[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-} 
-
-
- abline(fixef(Model_size_2)[1,1], fixef(Model_size_2)[2,1], col = 'blue', lw = 2)
-
-abline(mean(posterior3$alpha), mean(posterior3[,2]), col = 'red', lw = 2)
-
+Plot_stan(posterior3, Model_size_2)
 ```
 \newpage
 
@@ -315,13 +314,7 @@ summary(habitat_model)
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
-
-for (i in 1:500) {
- abline(fixef(habitat_model, summary = F)[i,1], fixef(habitat_model, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
- abline(fixef(habitat_model)[1,1], fixef(habitat_model)[2,1], col = 'blue', lw = 2)
+Plot_brms(habitat_model)
 ```
 
 
@@ -362,21 +355,14 @@ model {
 
 ```{r}
 fit6_summary <- summary(fit6, pars = c("beta[1]", "beta[2]","beta[3]","beta[4]", "sigma"), probs = c(0.05, 0.95))$summary
-print(fit6_summary)
+```
 
+```{r}
+knitr::kable(fit6_summary, caption = 'STAN model summary')
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
-
-for (i in 1:500) {
- abline(posterior6[i,1], posterior6[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-} 
-
-
- abline(fixef(habitat_model)[1,1], fixef(habitat_model)[2,1], col = 'blue', lw = 2)
-
-abline(mean(posterior6[,1]), mean(posterior6[,2]), col = 'red', lw = 2)
+Plot_stan(posterior6, habitat_model)
 
 ```
 
@@ -396,13 +382,7 @@ summary(habitat_model_2)
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
-
-for (i in 1:500) {
- abline(fixef(habitat_model_2, summary = F)[i,1], fixef(habitat_model_2, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
- abline(fixef(habitat_model_2)[1,1], fixef(habitat_model_2)[2,1], col = 'blue', lw = 2)
+Plot_brms(habitat_model_2)
 ```
 
 2. STAN model
@@ -441,22 +421,15 @@ model {
 ```
 
 ```{r}
-fit7_summary <- summary(fit7, pars = c("beta[1]", "beta[2]","beta[3]","beta[4]", "sigma"), probs = c(0.05, 0.95))$summary
-print(fit7_summary)
+fit7_summary <- summary(fit7, pars = c("beta[1]", "beta[2]","beta[3]","beta[4]","beta[5]","beta[6]","sigma"), probs = c(0.05, 0.95))$summary
+```
+
+```{r}
+knitr::kable(fit7_summary, caption = 'STAN model summary')
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
-
-for (i in 1:500) {
- abline(posterior7[i,1], posterior7[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-} 
-
-
- abline(fixef(habitat_model_2)[1,1], fixef(habitat_model_2)[2,1], col = 'blue', lw = 2)
-
-abline(mean(posterior7[,1]), mean(posterior7[,2]), col = 'red', lw = 2)
-
+Plot_stan(posterior7, habitat_model_2)
 ```
 
 \newpage
@@ -475,8 +448,7 @@ Table_fun(pglsMod1)
 ```
 
 ```{r echo=FALSE}
-plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
-abline(a = coef(pglsMod1)[1], b = coef(pglsMod1)[2], col = 6, lw = 2)
+Plot_pgls(pglsMod1)
 ```
 
 2. brms model
@@ -495,15 +467,7 @@ summary(Model_simple)
 
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
-
-for (i in 1:500) {
- abline(fixef(Model_simple, summary = F)[i,1], fixef(Model_simple, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
-abline(a = coef(pglsMod1)[1], b = coef(pglsMod1)[2], col = 6, lw = 2)
-
- abline(fixef(Model_simple)[1,1], fixef(Model_simple)[2,1], col = 'blue', lw = 2)
+Plot_brms(Model_simple)
 ```
 
 3. STAN model
@@ -567,19 +531,7 @@ fit4
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
-
-for (i in 1:200) {
- abline(posterior4$alpha[i], posterior4$beta[i], col = adjustcolor("gray", alpha = 0.15), lty = 1)
-} 
-
-
-abline(a = coef(pglsMod1)[1], b = coef(pglsMod1)[2], col = 6, lw = 2)
-
- abline(fixef(Model_simple)[1,1], fixef(Model_simple)[2,1], col = 'blue', lw = 2)
-
-abline(mean(posterior4$alpha), mean(posterior4$beta), col = 'red', lw = 2)
-
+Plot_stan(posterior4, Model_simple, z=pglsMod1)
 ```
 
 \newpage
@@ -598,9 +550,7 @@ Table_fun(pglsMod2)
 ```
 
 ```{r echo=FALSE}
-plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
-
-abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 6, lw = 2)
+Plot_pgls(pglsMod2)
 ```
 
 
@@ -619,15 +569,7 @@ summary(Model_BS)
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
-
-for (i in 1:500) {
- abline(fixef(Model_BS, summary = F)[i,1], fixef(Model_BS, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
-abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 6, lw = 2)
-
- abline(fixef(Model_BS)[1,1], fixef(Model_BS)[2,1], col = 'blue', lw = 2)
+Plot_brms(Model_BS, pglsMod2)
 ```
 
 3. STAN model
@@ -690,18 +632,7 @@ fit5
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
-
-for (i in 1:200) {
- abline(posterior5$alpha[i], posterior5[i,2], col = adjustcolor("gray", alpha = 0.15), lty = 1)
-} 
-
-
-abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 6, lw = 2)
-
- abline(fixef(Model_BS)[1,1], fixef(Model_BS)[2,1], col = 'blue', lw = 2)
-
-abline(mean(posterior5$alpha), mean(posterior5[,2]), col = 'red', lw = 2)
+Plot_stan(posterior5, Model_BS, pglsMod2)
 
 ```
 
@@ -720,9 +651,7 @@ Table_fun(pglsMod3)
 ```
 
 ```{r echo=FALSE}
-plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
-
-abline(a = coef(pglsMod3)[1], b = coef(pglsMod3)[2], col = 6, lw = 2)
+Plot_pgls(pglsMod3)
 ```
 
 2. brms model
@@ -740,15 +669,7 @@ summary(Model_BS2)
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
-
-for (i in 1:500) {
- abline(fixef(Model_BS, summary = F)[i,1], fixef(Model_BS, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
-abline(a = coef(pglsMod3)[1], b = coef(pglsMod3)[2], col = 6, lw = 2)
-
- abline(fixef(Model_BS2)[1,1], fixef(Model_BS2)[2,1], col = 'blue', lw = 2)
+Plot_brms(Model_BS2, pglsMod3)
 ```
 
 3. STAN model
@@ -807,24 +728,14 @@ model {
 }
 ```
 
+**WRONG STAN MODEL** WILL FIX SOON :3
+
 ```{r}
 fit3
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20) 
-
-for (i in 1:200) {
- abline(posterior3[i,1], posterior3[i,2], col = adjustcolor("gray", alpha = 0.15), lty = 1)
-} 
-
-
-abline(a = coef(pglsMod3)[1], b = coef(pglsMod3)[2], col = 6, lw = 2)
-
- abline(fixef(Model_BS2)[1,1], fixef(Model_BS2)[2,1], col = 'blue', lw = 2)
-
-abline(mean(posterior3$alpha), mean(posterior3[,2]), col = 'red', lw = 2)
-
+Plot_stan(posterior3, Model_BS2, pglsMod3)
 ```
 \newpage
 
@@ -842,9 +753,7 @@ summary(pglsMod5)
 
 
 ```{r echo=FALSE}
-plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
-
-abline(a = coef(pglsMod5)[1], b = coef(pglsMod5)[2], col = 6, lw = 2)
+Plot_pgls(pglsMod5)
 ```
 2. brms model
 ```
@@ -861,15 +770,7 @@ summary(HabitatPhylo)
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
-
-for (i in 1:500) {
- abline(fixef(HabitatPhylo, summary = F)[i,1], fixef(HabitatPhylo, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
-abline(a = coef(pglsMod5)[1], b = coef(pglsMod5)[2], col = 6, lw = 2)
-
- abline(fixef(HabitatPhylo)[1,1], fixef(HabitatPhylo)[2,1], col = 'blue', lw = 2)
+Plot_brms(HabitatPhylo, pglsMod5 )
 ```
 
 3. STAN Model
@@ -891,9 +792,7 @@ Table_fun(pglsMod6)
 ```
 
 ```{r echo=FALSE}
-plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
-
-abline(a = coef(pglsMod6)[1], b = coef(pglsMod6)[2], col = 6, lw = 2)
+Plot_pgls(pglsMod6)
 ```
 
 2. BRMS Model
@@ -913,15 +812,7 @@ summary(HabitatPhylo2)
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
-
-for (i in 1:500) {
- abline(fixef(HabitatPhylo2, summary = F)[i,1], fixef(HabitatPhylo2, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
-abline(a = coef(pglsMod6)[1], b = coef(pglsMod6)[2], col = 6, lw = 2)
-
- abline(fixef(HabitatPhylo2)[1,1], fixef(HabitatPhylo2)[2,1], col = 'blue', lw = 2)
+Plot_brms(HabitatPhylo2, pglsMod6)
 ```
 
 3. STAN Model
@@ -941,9 +832,7 @@ Table_fun(pglsMod8)
 ```
 
 ```{r echo=FALSE}
-plot(Log10CFAR ~ Log10MeanGSH_centered, data = GSH_df_pgls, pch = 20)
-
-abline(a = coef(pglsMod8)[1], b = coef(pglsMod8)[2], col = 6, lw = 2)
+Plot_pgls(pglsMod8)
 ```
 
 
@@ -962,15 +851,7 @@ summary(SizeHabitatModel)
 ```
 
 ```{r echo=FALSE}
-plot(GSH_df_pgls$Log10CFAR ~ GSH_df_pgls$Log10MeanGSH_centered, pch = 20)
-
-for (i in 1:500) {
- abline(fixef(SizeHabitatModel, summary = F)[i,1], fixef(SizeHabitatModel, summary = F)[i,2], col = adjustcolor("gray", alpha = 0.05), lty = 1)
-}
-
-abline(a = coef(pglsMod8)[1], b = coef(pglsMod8)[2], col = 6, lw = 2)
-
- abline(fixef(SizeHabitatModel)[1,1], fixef(SizeHabitatModel)[2,1], col = 'blue', lw = 2)
+Plot_brms(SizeHabitatModel, pglsMod8)
 ```
 
 3. STAN Model

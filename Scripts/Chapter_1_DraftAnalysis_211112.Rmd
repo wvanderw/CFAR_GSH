@@ -565,7 +565,7 @@ fit1 <- stan(file = './StanModel1.stan', data = stan_data, warmup = 500, iter = 
 
 
 ```{r}
-posterior <- extract(fit1)
+posterior <- as.data.frame(fit1)
 cat(c('alpha', 'beta', 'sigma', 'lp__\n', mean(posterior$alpha), mean(posterior$beta), mean(posterior$sigma), mean(posterior$lp__)))
 
 ```
@@ -747,12 +747,14 @@ posterior5 <- as.data.frame(fit5)
 #STAN Model 6 (CFAR ~ GSH + PrimaryHabitat)
 ```{r}
 ## Stan Model 6 -- Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat
+data_matrix_6 <- model.matrix(~ Log10MeanGSH_centered + PrimaryHabitat, data = GSH_df_pgls)
+
 
 #data
 N <- length(GSH_df_pgls$Binomial)
-K <- 2
 y <- GSH_df_pgls$Log10CFAR
-x <- matrix(c(GSH_df_pgls$Log10MeanGSH_centered, GSH_df_pgls$PrimaryHabitat), ncol = 2, byrow = F)
+x <- data_matrix_6
+K <- ncol(x)
 
 stan_data6 <- list(N=N,K=K,y=y,x=x)
 
@@ -801,25 +803,26 @@ abline(a = coef(pglsMod2)[1], b = coef(pglsMod2)[2], col = 2, lty = 2, lw = 5)
 #STAN Model 7 (CFAR ~ GSH * PrimaryHabitat)
 ```{r}
 ## Stan Model 6 -- Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat
+data_matrix_7 <- model.matrix(~ Log10MeanGSH_centered * PrimaryHabitat, data = GSH_df_pgls)
+
 
 #data
 N <- length(GSH_df_pgls$Binomial)
-K <- 3
 y <- GSH_df_pgls$Log10CFAR
-x <- matrix(c(GSH_df_pgls$Log10MeanGSH_centered, GSH_df_pgls$PrimaryHabitat,(GSH_df_pgls$Log10MeanGSH_centered* GSH_df_pgls$PrimaryHabitat)), ncol = 3, byrow = F)
-
+x <- data_matrix_7
+K <- ncol(x)
 stan_data7 <- list(N=N,K=K,y=y,x=x)
 
 
-fit7 <- stan(file = './StanModel2.stan', data = stan_data6, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1)
+fit7 <- stan(file = './StanModel2.stan', data = stan_data7, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1)
   
 
 ```
 
 
 ```{r}
-fit7
-posterior7 <- extract(fit7)
+#fit7
+posterior7 <- as.data.frame(fit7)
 ```
 
 #Lambda and residuals (quick and dirty)
