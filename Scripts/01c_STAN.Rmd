@@ -14,14 +14,220 @@ knitr::opts_chunk$set(echo = TRUE)
 ## March 24, 2022
 
 ## Model 1 - CFAR ~ GSH
+```{r}
+##Data prep #add in priors from brms?
+
+y <- GSH_df_pgls$Log10CFAR
+x <- c(GSH_df_pgls$Log10MeanGSH_centered)
+N <- length(GSH_df_pgls$Binomial)
+
+stan_data <- list(N = N, x = x, y = y)
+  
+fit1 <- stan(file = './StanModel1.stan', data = stan_data, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1)
+  
+
+```
+
+
+```{r}
+posterior <- as.data.frame(fit1)
+fit1_summary <- summary(fit1, pars = c('alpha','beta','sigma'), probs = c(0.025,0.975))$summary
+fit1_summary
+```
 ## Model 2 - CFAR ~ GSH * Max Size
+```{r}
+## Stan Model 2 -- Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered
+
+#data matrix
+data_matrix_2 <- model.matrix(~ Log10MeanGSH_centered * Log10MaxSize_centered, data = GSH_df_pgls)
+
+#data
+N <- length(GSH_df_pgls$Binomial)
+y <- GSH_df_pgls$Log10CFAR
+x <- data_matrix_2
+K <- ncol(x)
+
+stan_data2 <- list(N=N,K=K,y=y,x=x)
+
+
+## Stan Model 2 -- Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered
+StanModel2 <- stan_model(file = here('Scripts', 'StanModel2.stan'))
+
+fit2 <- stan(file = './StanModel2.stan', data = stan_data2, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1, control = list('max_treedepth' = 10))
+  
+
+```
+
+```{r}
+
+posterior2 <- as.data.frame(fit2)
+fit2_summary <- summary(fit2, pars = c('beta[1]','beta[2]','beta[3]','beta[4]','sigma'), probs = c(0.025,0.975))$summary
+dimnames(fit2_summary)[[1]] <- c('alpha','beta','beta2 (size)','GSH:Size','sigma')
+fit2_summary
+
+```
+
+
 ## Model 3 - CFAR ~ GSH + Max Size (No interaction)
+```{r}
+## Stan Model 3 -- Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered
+
+#data matrix
+data_matrix_3 <- model.matrix(~ Log10MeanGSH_centered + Log10MaxSize_centered, data = GSH_df_pgls)
+
+#data
+N <- length(GSH_df_pgls$Binomial)
+y <- GSH_df_pgls$Log10CFAR
+x <- data_matrix_3
+K <- ncol(x)
+
+stan_data3 <- list(N=N,K=K,y=y,x=x)
+
+
+fit3 <- stan(file = './StanModel2.stan', data = stan_data3, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1)
+  
+
+```
+
+
+```{r}
+posterior3 <- as.data.frame(fit3)
+fit3_summary <- summary(fit3, pars = c("beta[1]", "beta[2]",'beta[3]',"sigma"), probs = c(0.025, 0.975))$summary
+dimnames(fit3_summary)[[1]] <- c('alpha','beta','beta2 (size)','sigma')
+fit3_summary
+```
+
 ## Model 4 - CFAR ~ GSH + PrimaryHabitat (No interaction)
+```{r}
+## Stan Model 6 -- Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat
+data_matrix_4 <- model.matrix(~ Log10MeanGSH_centered + PrimaryHabitat, data = GSH_df_pgls)
+
+
+#data
+N <- length(GSH_df_pgls$Binomial)
+y <- GSH_df_pgls$Log10CFAR
+x <- data_matrix_6
+K <- ncol(x)
+
+stan_data4 <- list(N=N,K=K,y=y,x=x)
+
+
+fit4 <- stan(file = './StanModel2.stan', data = stan_data4, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1)
+  
+
+```
+
+
+```{r}
+posterior4 <- as.data.frame(fit4)
+fit4_summary <- summary(fit4, pars = c('beta[1]','beta[2]','beta[3]','beta[4]','sigma'), probs = c(0.025,0.975))$summary
+fit4_summary
+dimnames(fit4_summary)[[1]] <- c('alpha','beta','deepwater','pelagic','sigma')
+```
 ## Model 5 - CFAR ~ GSH * PrimaryHabitat
+```{r}
+## Stan Model 6 -- Log10CFAR ~ Log10MeanGSH_centered * PrimaryHabitat
+data_matrix_5 <- model.matrix(~ Log10MeanGSH_centered * PrimaryHabitat, data = GSH_df_pgls)
+
+
+#data
+N <- length(GSH_df_pgls$Binomial)
+y <- GSH_df_pgls$Log10CFAR
+x <- data_matrix_5
+K <- ncol(x)
+stan_data5 <- list(N=N,K=K,y=y,x=x)
+
+
+fit5 <- stan(file = './StanModel2.stan', data = stan_data5, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1)
+  
+
+```
+
+
+```{r}
+posterior5 <- as.data.frame(fit5)
+
+fit5_summary <- summary(fit5, pars = c('beta[1]','beta[2]','beta[3]','beta[4]','beta[5]','beta[6]','sigma'), probs = c(0.025,0.975))$summary
+dimnames(fit5_summary)[[1]] <- c('alpha','beta','deepwater','pelagic','GSH:deepwater','GSH:pelagic','sigma')
+fit5_summary
+```
+
 ## Model 6 - CFAR ~ GSH + Phylogeny
+```{r}
+data_matrix_6 <- model.matrix(~ Log10MeanGSH_centered, data = GSH_df_pgls)
+
+y <- GSH_df_pgls$Log10CFAR
+x <- data_matrix_6
+N <- length(GSH_df_pgls$Binomial)
+K <- ncol(x)
+d_mat <- diag(1, 456, 456)
+
+
+
+stan_data6 <- list(N = N, x = x, y = y, K = K, d_mat = d_mat, A = A)
+
+
+fit6 <- stan(file = './StanModel3.stan', data = stan_data6, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 10)
+  
+
+```
+
+```{r}
+posterior6 <- as.data.frame(fit6)
+
+fit6_summary <- summary(fit6, pars = c('beta[1]','beta[2]','beta[3]','beta[4]','beta[5]','beta[6]','sigma'), probs = c(0.025,0.975))$summary
+dimnames(fit6_summary)[[1]] <- c('alpha','beta','deepwater','pelagic','GSH:deepwater','GSH:pelagic','sigma')
+fit6_summary
+```
 ## Model 7 - CFAR ~ GSH * Max Size + Phylogeny
+```{r}
+data_matrix_7 <- model.matrix(~ Log10MeanGSH_centered * Log10MaxSize_centered, data = GSH_df_pgls)
+
+y <- GSH_df_pgls$Log10CFAR
+x <- data_matrix_7
+N <- length(GSH_df_pgls$Binomial)
+K <- ncol(x)
+d_mat <- diag(1, 456, 456)
+
+
+
+stan_data7 <- list(N = N, x = x, y = y, K =K, d_mat = d_mat, A = A)
+  
+
+fit7 <- stan(file = './StanModel3.stan', data = stan_data7, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 10)
+```
+
+
 ## Model 8 - CFAR ~ GSH + Max Size + Phylogeny
+```{r}
+data_matrix_8 <- model.matrix(~ Log10MeanGSH_centered + Log10MaxSize_centered, data = GSH_df_pgls)
+
+y <- GSH_df_pgls$Log10CFAR
+x <- data_matrix_8
+N <- length(GSH_df_pgls$Binomial)
+K <- ncol(x)
+d_mat <- diag(1, 456, 456)
+
+stan_data8 <- list(N = N, x = x, y = y, K =K, d_mat = d_mat, A = A)
+
+fit8 <- stan(file = './StanModel3.stan', data = stan_data8, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 10)
+```
+
 ## Model 9 - CFAR ~ GSH + PrimaryHabitat + Phylogeny
+```{r}
+data_matrix_9 <- model.matrix(~ Log10MeanGSH_centered + PrimaryHabitat, data = GSH_df_pgls)
+
+y <- GSH_df_pgls$Log10CFAR
+x <- data_matrix_9
+N <- length(GSH_df_pgls$Binomial)
+K <- ncol(x)
+d_mat <- diag(1, 456, 456)
+
+stan_data9 <- list(N = N, x = x, y = y, K =K, d_mat = d_mat, A = A)
+
+fit9 <- stan(file = './StanModel3.stan', data = stan_data9, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 10)
+```
 ## Model 10 - CFAR ~ GSH * PrimaryHabitat + Phylogeny
+
 ## Model 11 - CFAR ~ GSH * MaxSize + PrimaryHabitat + Phylogeny
 

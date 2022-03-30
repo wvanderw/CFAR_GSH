@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## March 24, 2022
 
 ## Model 1 - CFAR ~ GSH
+
 ```{r}
 Plain_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered,
                     data = GSH_df_pgls,

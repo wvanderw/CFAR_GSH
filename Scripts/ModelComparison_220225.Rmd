@@ -150,11 +150,9 @@ model {
   y ~ normal(alpha + x * beta , sigma);
 }
 ```
-```{r echo=FALSE}
-fit1_summary <- summary(fit1, pars = c("alpha", "beta","sigma"), probs = c(0.025, 0.975))$summary
-```
 
-```{r}
+
+```{r echo=FALSE}
 knitr::kable(fit1_summary, caption = 'STAN model summary')
 ```
 
@@ -216,12 +214,9 @@ model {
 }
 ```
 
+
+
 ```{r echo=FALSE}
-fit2_summary <- summary(fit2, pars = c("beta[1]", "beta[2]","beta[3]","beta[4]","sigma"), probs = c(0.025, 0.975))$summary
-
-```
-
-```{r}
 knitr::kable(fit2_summary, caption = 'STAN model summary')
 ```
 
@@ -285,11 +280,8 @@ model {
 }
 ```
 
-```{r}
-fit3_summary <- summary(fit3, pars = c("beta[1]", "beta[2]","sigma"), probs = c(0.025, 0.975))$summary
-```
 
-```{r}
+```{r echo=FALSE}
 knitr::kable(fit3_summary, caption = 'STAN model summary')
 ```
 
@@ -353,16 +345,13 @@ model {
 }
 ```
 
-```{r}
-fit6_summary <- summary(fit6, pars = c("beta[1]", "beta[2]","beta[3]","beta[4]", "sigma"), probs = c(0.05, 0.95))$summary
-```
 
-```{r}
-knitr::kable(fit6_summary, caption = 'STAN model summary')
+```{r echo=FALSE}
+knitr::kable(fit4_summary, caption = 'STAN model summary')
 ```
 
 ```{r echo=FALSE}
-Plot_stan(posterior6, habitat_model)
+Plot_stan(posterior4, habitat_model)
 
 ```
 
@@ -420,16 +409,14 @@ model {
 }
 ```
 
-```{r}
-fit7_summary <- summary(fit7, pars = c("beta[1]", "beta[2]","beta[3]","beta[4]","beta[5]","beta[6]","sigma"), probs = c(0.05, 0.95))$summary
-```
 
-```{r}
-knitr::kable(fit7_summary, caption = 'STAN model summary')
+
+```{r echo=FALSE}
+knitr::kable(fit5_summary, caption = 'STAN model summary')
 ```
 
 ```{r echo=FALSE}
-Plot_stan(posterior7, habitat_model_2)
+Plot_stan(posterior5, habitat_model_2)
 ```
 
 \newpage

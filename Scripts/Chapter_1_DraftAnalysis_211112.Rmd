@@ -166,12 +166,15 @@ target <- SampleTree$tip.label
 GSH_df_pgls <- GSH_df_pgls %>% 
   arrange(factor(GSH_df_pgls$Binomial, levels = target))
 
-#covariance matrix
-A <- ape::vcv.phylo(SampleTree, corr = TRUE)
-B <- ape::vcv(SampleTree, corr = TRUE)
+#covariance matrix (STAN)
+A <- ape::vcv.phylo(SampleTree)
+#correlation matrix (BRMS)
+B <- ape::vcv.phylo(SampleTree, corr = TRUE)
+
 
 
 ```
+Link here for brms / stan correlation<https://discourse.mc-stan.org/t/covariance-matrix-phylogenetic-models/20477/2>
 
 ## Plot the Tree
 ```{r}
