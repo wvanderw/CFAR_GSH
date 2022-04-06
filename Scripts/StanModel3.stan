@@ -50,6 +50,8 @@ model {
 // need to redefine to keep for comaprison
 generated quantities {
  
+        real log_lik;
         
+        log_lik = multi_normal_lpdf(y | x * beta, sigma_total);
       
 }
