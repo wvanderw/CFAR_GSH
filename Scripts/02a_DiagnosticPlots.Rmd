@@ -21,3 +21,82 @@ plot(pglsMod1, resid(., type = 'p') ~ fitted(.), abline = 0)
 qqnorm(pglsMod1, abline = c(0,1))
 ```
 
+
+
+```{r}
+posterior11_b <- extract(fit11, inc_warmup = TRUE, permuted = FALSE)
+
+
+color_scheme_set("mix-blue-pink")
+p <- mcmc_trace(posterior11_b,  pars = c("beta[1]", "beta[2]"), n_warmup = 50,
+                facet_args = list(nrow = 2, labeller = label_parsed))
+p + facet_text(size = 15)
+```
+
+```{r}
+posterior11_c <- as.matrix(fit11)
+color_scheme_set('purple')
+mcmcareaplot <- mcmc_areas(posterior11_c, pars = c('beta[1]','beta[2]'), prob = 0.95)
+ ggsave(here('./Data/Output/MCMC_Area_plot1.pdf'), mcmcareaplot, device = 'pdf', height = 6, width = 8, units = 'in')
+
+```
+
+```{r}
+color_scheme_set("brightblue")
+SizeHabitatModel %>%
+  posterior_predict(draws = 500) %>%
+  ppc_stat_grouped(y = GSH_df_pgls$Log10CFAR,
+                   group = GSH_df_pgls$PrimaryHabitat,
+                   stat = "median")
+```
+
+```{r}
+color_scheme_set('purple')
+bayesplot_theme_set(theme_classic())
+
+PPC_plot1 <- ppc_intervals(
+  y = GSH_df_pgls$Log10CFAR,
+  yrep = posterior_predict(SizeHabitatModel),
+  x = as.numeric(GSH_df_pgls$Log10MeanGSH_centered),
+  prob = 0.95
+) +
+  labs(
+    x = "Log10 Mean GSH",
+    y = "Log10 CFAR",
+    title = "95% posterior predictive intervals \nvs observed CFAR",
+    subtitle = "by mean GSH (proportion total length)"
+  ) 
+
+ggsave(here('./Data/Output/PPC_plot1.pdf'), PPC_plot1, device = 'pdf', height = 6, width = 8, units = 'in')
+
+```
+
+
+```{r}
+loo11 <- loo(SizeHabitatModel, save_psis = TRUE, cores = 4)
+
+y <- GSH_df_pgls$Log10CFAR
+yrep <- posterior_predict(SizeHabitatModel)
+```
+
+```{r}
+psis11 <- loo11$psis_object
+lw <- weights(psis11)
+```
+
+```{r}
+color_scheme_set('purple')
+ppc_loo_pit_overlay(y, yrep, lw = lw)
+```
+
+```{r}
+ppc_loo_pit_qq(y, yrep, lw = lw, compare = 'normal')
+```
+```{r}
+keep_obs <- c(1:100)
+
+ppc_loo <- ppc_loo_intervals(y, yrep, psis_object = psis11, subset = keep_obs, order = 'median', prob = 0.95)
+
+ggsave(here('./Data/Output/PPC_LOO_plot1.pdf'), ppc_loo, device = 'pdf', height = 6, width = 8, units = 'in')
+```
+
