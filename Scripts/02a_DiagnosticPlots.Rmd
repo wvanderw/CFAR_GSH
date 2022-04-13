@@ -58,7 +58,7 @@ PPC_plot1 <- ppc_intervals(
   y = GSH_df_pgls$Log10CFAR,
   yrep = posterior_predict(SizeHabitatModel),
   x = as.numeric(GSH_df_pgls$Log10MeanGSH_centered),
-  prob = 0.95
+  prob = 0.5, prob_outer = 0.95
 ) +
   labs(
     x = "Log10 Mean GSH",
@@ -69,6 +69,25 @@ PPC_plot1 <- ppc_intervals(
 
 ggsave(here('./Data/Output/PPC_plot1.pdf'), PPC_plot1, device = 'pdf', height = 6, width = 8, units = 'in')
 
+```
+
+```{r}
+ppd_dens_overlay(yrep[1:100, ])
+```
+
+
+```{r}
+ppc_dens_overlay(y = GSH_df_pgls$Log10CFAR, yrep = yrep[1:50, ])
+```
+
+```{r}
+ppd_intervals(ypred = yrep, prob = 0.5, prob_outer = 0.95, x = as.numeric(GSH_df_pgls$Log10MeanGSH_centered))+
+  labs(
+    x = "Log10 Mean GSH",
+    y = "Log10 CFAR",
+    title = "95% posterior predictive intervals \nvs observed CFAR",
+    subtitle = "by mean GSH (proportion total length)"
+  ) 
 ```
 
 
