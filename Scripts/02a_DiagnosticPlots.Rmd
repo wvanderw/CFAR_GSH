@@ -36,9 +36,23 @@ p + facet_text(size = 15)
 ```{r}
 posterior11_c <- as.matrix(fit11)
 color_scheme_set('purple')
-mcmcareaplot <- mcmc_areas(posterior11_c, pars = c('beta[1]','beta[2]'), prob = 0.95)
+
+dimnames(posterior11_c)[[2]] <- c("alpha", "beta", "MaxSize", "Deepwater", "Pelagic", "GSH:MaxSize", "sigma", "lambda", "log_lik", "lp__") 
+
+
+mcmcareaplot <- mcmc_areas(posterior11_c, pars = c("alpha", "beta", "sigma", "lambda"), prob = 0.95)
  ggsave(here('./Data/Output/MCMC_Area_plot1.pdf'), mcmcareaplot, device = 'pdf', height = 6, width = 8, units = 'in')
 
+mcmcareaplot <- mcmcareaplot +
+  theme_transparent()
+
+png(here('./Data/Output/MCMC_Area_plot2.png'), width = 20, height = 15,
+    units = "cm", res = 800, bg = "transparent")
+
+mcmcareaplot
+
+dev.off()
+ 
 ```
 
 ```{r}
@@ -51,8 +65,10 @@ SizeHabitatModel %>%
 ```
 
 ```{r}
-color_scheme_set('purple')
-bayesplot_theme_set(theme_classic())
+
+###bae plot###
+color_scheme_set('brightblue')
+bayesplot_theme_set(theme_transparent())
 
 PPC_plot1 <- ppc_intervals(
   y = GSH_df_pgls$Log10CFAR,
@@ -64,20 +80,104 @@ PPC_plot1 <- ppc_intervals(
     x = "Log10 Mean GSH",
     y = "Log10 CFAR",
     title = "95% posterior predictive intervals \nvs observed CFAR",
-    subtitle = "by mean GSH (proportion total length)"
   ) 
 
-ggsave(here('./Data/Output/PPC_plot1.pdf'), PPC_plot1, device = 'pdf', height = 6, width = 8, units = 'in')
+
+
+### coastal ranges###
+coastal_spp <- GSH_df_pgls %>% 
+  filter(PrimaryHabitat == 'Coastal') %>% 
+  arrange(Log10MeanGSH_centered)
+
+coastal_spp_range <- c(as.numeric(coastal_spp[1,36]), as.numeric(coastal_spp[198,36]), as.numeric(coastal_spp[1,37]), as.numeric(coastal_spp[198,37]))
+
+coastal_ystart = coastal_spp_range[1]*fit11_summary[2,1] + #GSH slope
+                 coastal_spp_range[3]*fit11_summary[3,1] + #Size slope
+                 fit11_summary[6,1]*coastal_spp_range[1]*coastal_spp_range[3] + #interaction 
+                 fit11_summary[1,1] #intercept
+  
+coastal_yend = coastal_spp_range[2]*fit11_summary[2,1] + 
+               coastal_spp_range[4]*fit11_summary[3,1] + 
+               fit11_summary[6,1]*coastal_spp_range[2]*coastal_spp_range[4] + 
+               fit11_summary[1,1]
+
+PPCplot1 <- PPC_plot1 + geom_abline(intercept = fit11_summary[1,1], slope = fit11_summary[2,1] )
+
+PPC_plot1 <- PPC_plot1 + geom_segment(x = coastal_spp_range[1], xend = coastal_spp_range[2], y = coastal_ystart, yend = coastal_yend, color = 'orange')
+
+###deepwater###
+deepwater_spp <- GSH_df_pgls %>% 
+  filter(PrimaryHabitat == 'Deepwater') %>% 
+  arrange(Log10MeanGSH_centered)
+
+deepwater_spp_range <- c(as.numeric(deepwater_spp[1,36]), as.numeric(deepwater_spp[232,36]), as.numeric(deepwater_spp[1,37]), as.numeric(deepwater_spp[232,37]))
+
+deepwater_ystart = deepwater_spp_range[1]*fit11_summary[2,1] + 
+  deepwater_spp_range[3]*fit11_summary[3,1] + 
+  fit11_summary[4,1]*deepwater_spp_range[1] + 
+  fit11_summary[6,1]*deepwater_spp_range[1]*deepwater_spp_range[3] + 
+  fit11_summary[1,1]
+  
+deepwater_yend = deepwater_spp_range[2]*fit11_summary[2,1] + deepwater_spp_range[4]*fit11_summary[3,1] + fit11_summary[6,1]*deepwater_spp_range[2]*deepwater_spp_range[4] + fit11_summary[1,1]
+
+
+PPC_plot1 <- PPC_plot1 + geom_segment(x = deepwater_spp_range[1], xend = deepwater_spp_range[2], y = deepwater_ystart, yend = deepwater_yend, color = 'green')
+PPC_plot1
+
+###pelagic###
+pelagic_spp <- GSH_df_pgls %>% 
+  filter(PrimaryHabitat == 'Pelagic')
+
+pelagic_spp_range <- c(min(as.numeric(pelagic_spp$Log10MeanGSH_centered)), max(as.numeric(pelagic_spp$Log10MeanGSH_centered)), min(pelagic_spp$Log10MaxSize_centered), max(pelagic_spp$Log10MaxSize_centered))
+
+pelagic_ystart = pelagic_spp_range[1]*fit11_summary[2,1] + pelagic_spp_range[3]*fit11_summary[3,1] + fit11_summary[6,1]*pelagic_spp_range[1]*pelagic_spp_range[3] + fit11_summary[1,1]
+  
+pelagic_yend = pelagic_spp_range[2]*fit11_summary[2,1] + pelagic_spp_range[4]*fit11_summary[3,1] + fit11_summary[6,1]*pelagic_spp_range[2]*pelagic_spp_range[4] + fit11_summary[1,1]
+
+PPC_plot1 <- PPC_plot1 + geom_segment(x = pelagic_spp_range[1], xend = pelagic_spp_range[2], y = pelagic_ystart, yend = pelagic_yend, color = 'blue')
+PPC_plot1
+
+ggsave(here('./Data/Output/PPC_plot1.png'), PPC_plot1, device = 'png', height = 6, width = 8, units = 'in')
 
 ```
 
 ```{r}
-ppd_dens_overlay(yrep[1:100, ])
+Prez_plot <- GSH_df_pgls %>% 
+  data_grid(Log10MeanGSH_centered = seq_range(Log10MeanGSH_centered, 100), Binomial, Log10MaxSize_centered, PrimaryHabitat) %>% 
+  add_epred_draws(SizeHabitatModel, ndraws = 10) %>% 
+  ggplot(aes(x = Log10MeanGSH_centered, y = Log10CFAR, color = PrimaryHabitat), fill = PrimaryHabitat) +
+  stat_lineribbon(aes(y = .prediction), .width = c(.95, .80, .50), alpha = .25)+
+  geom_point(data = GSH_df_pgls)+
+  scale_fill_brewer(palette = 'Greys')+
+  scale_colour_brewer(palette = 'Set2')
+```
+
+
+
+```{r}
+ppd_dens_overlay(ypred = yrep[1:100, ])
 ```
 
 
 ```{r}
-ppc_dens_overlay(y = GSH_df_pgls$Log10CFAR, yrep = yrep[1:50, ])
+PPC_plot2 <- ppc_dens_overlay(y = GSH_df_pgls$Log10CFAR, yrep = yrep[1:50, ], alpha = 0.25) +
+  geom_vline(xintercept = mean(y), color = "#023858") +
+  theme_transparent()
+
+ggsave(here('./Data/Output/PPC_plot2.png'), PPC_plot2, device = 'png', height = 6, width = 8, units = 'in')
+
+G <- GSH_df_pgls$PrimaryHabitat
+
+PPC_plot3 <- ppc_dens_overlay_grouped(y = GSH_df_pgls$Log10CFAR, yrep = yrep[1:50, ], alpha = 0.25, group = G ) +
+  theme_transparent()
+
+ggsave(here('./Data/Output/PPC_plot3.png'), PPC_plot3, device = 'png', height = 6, width = 8, units = 'in')
+
+PPC_plot4 <- ppc_stat_grouped(y = GSH_df_pgls$Log10CFAR, yrep = yrep, group = G, stat = 'mean') +
+  theme_transparent()
+
+ggsave(here('./Data/Output/PPC_plot4.png'), PPC_plot4, device = 'png', height = 6, width = 12, units = 'in')
+
 ```
 
 ```{r}

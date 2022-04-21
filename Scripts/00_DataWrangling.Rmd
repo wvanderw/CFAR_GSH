@@ -25,6 +25,8 @@ library(ape)
 library(phytools)
 library(nlme)
 library(tidyr)
+library(tidybayes) #
+library(modelr)
 library(ggplot2)
 library(dplyr)
 library(geiger)

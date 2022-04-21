@@ -307,7 +307,7 @@ fit11 <- stan(file = './StanModel3.stan', data = stan_data11, warmup = 500, iter
 ```
 
 ```{r}
-save(fit11, file = here("./Data/Output/STANMod10_v1.rds"))
+save(fit11, file = here("./Data/Output/STANMod11_v1.rds"))
 
 posterior11 <- as.data.frame(fit11)
 

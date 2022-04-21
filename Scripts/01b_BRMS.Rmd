@@ -235,6 +235,11 @@ Model_BS2 <- brm(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered + (1|
 summary(Model_BS2)
 ```
 
+```{r}
+plot(conditional_effects(Model_BS2), points = TRUE)
+```
+
+
 ## Model 9 - CFAR ~ GSH + PrimaryHabitat + Phylogeny
 ```{r}
 HabitatPhylo_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat + (1|gr(Binomial, cov = B)),
@@ -285,6 +290,9 @@ SizeHabitatModel <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centere
                 sample_prior = TRUE, chains = 4, cores = 4)
 
 summary(SizeHabitatModel)
+```
+```{r}
+plot(conditional_effects(SizeHabitatModel), points = TRUE)
 ```
 
 
