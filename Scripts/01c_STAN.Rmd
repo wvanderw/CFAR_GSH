@@ -23,13 +23,15 @@ N <- length(GSH_df_pgls$Binomial)
 
 stan_data <- list(N = N, x = x, y = y)
   
-fit1 <- stan(file = './StanModel1.stan', data = stan_data, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1)
+fit1 <- stan(file = './StanModel1.stan', data = stan_data, warmup = 1000, iter = 5000, chains = 4, cores = 4, thin = 1)
   
 
 ```
 
 
 ```{r}
+save(fit1, file = here("./Data/Output/STANMod1_v1.rds"))
+
 posterior <- as.data.frame(fit1)
 fit1_summary <- summary(fit1, pars = c('alpha','beta','sigma'), probs = c(0.025,0.975))$summary
 fit1_summary
@@ -50,12 +52,9 @@ K <- ncol(x)
 stan_data2 <- list(N=N,K=K,y=y,x=x)
 
 
-## Stan Model 2 -- Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered
-StanModel2 <- stan_model(file = here('Scripts', 'StanModel2.stan'))
-
-fit2 <- stan(file = './StanModel2.stan', data = stan_data2, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1, control = list('max_treedepth' = 10))
+fit2 <- stan(file = './StanModel2.stan', data = stan_data2, warmup = 1000, iter = 5000, chains = 4, cores = 4, thin = 1)
   
-
+save(fit2, file = here('./Data/Output/STANMod2_v1.rds'))
 ```
 
 ```{r}
@@ -84,9 +83,9 @@ K <- ncol(x)
 stan_data3 <- list(N=N,K=K,y=y,x=x)
 
 
-fit3 <- stan(file = './StanModel2.stan', data = stan_data3, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1)
+fit3 <- stan(file = './StanModel2.stan', data = stan_data3, warmup = 1000, iter = 5000, chains = 4, cores = 4, thin = 1)
   
-
+save(fit3, file = here('./Data/Output/STANMod3_v1.rds'))
 ```
 
 
@@ -106,23 +105,23 @@ data_matrix_4 <- model.matrix(~ Log10MeanGSH_centered + PrimaryHabitat, data = G
 #data
 N <- length(GSH_df_pgls$Binomial)
 y <- GSH_df_pgls$Log10CFAR
-x <- data_matrix_6
+x <- data_matrix_4
 K <- ncol(x)
 
 stan_data4 <- list(N=N,K=K,y=y,x=x)
 
 
-fit4 <- stan(file = './StanModel2.stan', data = stan_data4, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1)
+fit4 <- stan(file = './StanModel2.stan', data = stan_data4, warmup = 1000, iter = 5000, chains = 4, cores = 4, thin = 1)
   
-
+save(fit4, file = here('./Data/Output/STANMod4_v1.rds'))
 ```
 
 
 ```{r}
 posterior4 <- as.data.frame(fit4)
 fit4_summary <- summary(fit4, pars = c('beta[1]','beta[2]','beta[3]','beta[4]','sigma'), probs = c(0.025,0.975))$summary
-fit4_summary
 dimnames(fit4_summary)[[1]] <- c('alpha','beta','deepwater','pelagic','sigma')
+fit4_summary
 ```
 ## Model 5 - CFAR ~ GSH * PrimaryHabitat
 ```{r}
@@ -138,9 +137,9 @@ K <- ncol(x)
 stan_data5 <- list(N=N,K=K,y=y,x=x)
 
 
-fit5 <- stan(file = './StanModel2.stan', data = stan_data5, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1)
+fit5 <- stan(file = './StanModel2.stan', data = stan_data5, warmup = 1000, iter = 5000, chains = 4, cores = 4, thin = 1)
   
-
+save(fit5, file = here('./Data/Output/STANMod5_v1.rds'))
 ```
 
 
@@ -154,6 +153,7 @@ fit5_summary
 
 ## Model 6 - CFAR ~ GSH + Phylogeny
 ```{r}
+
 data_matrix_6 <- model.matrix(~ Log10MeanGSH_centered, data = GSH_df_pgls)
 
 y <- GSH_df_pgls$Log10CFAR
@@ -167,16 +167,16 @@ d_mat <- diag(1, 456, 456)
 stan_data6 <- list(N = N, x = x, y = y, K = K, d_mat = d_mat, A = A)
 
 
-fit6 <- stan(file = './StanModel3.stan', data = stan_data6, warmup = 500, iter = 1000, chains = 4, cores = 5, thin = 1,
-             pars = c('beta','sigma','lambda', 'log_lik'))
+fit6 <- stan(file = './StanModel3.stan', data = stan_data6, warmup = 100, iter = 500, chains = 4, cores = 4, thin = 1,
+             pars = c('beta','sigma','lambda', 'log_lik', 'sigma_total'))
   
-
+save(fit6, file = here("./Data/Output/STANMod6_v1.rds"))
 ```
 
 ```{r}
-save(fit6, file = here("./Data/Output/STANMod6_v1.rds"))
 
-posterior6 <- as.data.frame(fit6)
+
+posterior6 <- extract(fit6)
 
 fit6_summary <- summary(fit6, pars = c('beta[1]','beta[2]','sigma','lambda'), probs = c(0.025,0.975))$summary
 dimnames(fit6_summary)[[1]] <- c('alpha','beta','sigma','lambda')
@@ -184,6 +184,7 @@ fit6_summary
 ```
 ## Model 7 - CFAR ~ GSH * Max Size + Phylogeny
 ```{r}
+
 data_matrix_7 <- model.matrix(~ Log10MeanGSH_centered * Log10MaxSize_centered, data = GSH_df_pgls)
 
 y <- GSH_df_pgls$Log10CFAR
@@ -197,12 +198,14 @@ d_mat <- diag(1, 456, 456)
 stan_data7 <- list(N = N, x = x, y = y, K =K, d_mat = d_mat, A = A)
   
 
-fit7 <- stan(file = './StanModel3.stan', data = stan_data7, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1,
-             pars = c('beta','sigma','lambda', 'log_lik'))
+fit7 <- stan(file = './StanModel3.stan', data = stan_data7, warmup = 1000, iter = 5000, chains = 4, cores = 4, thin = 1,
+             pars = c('beta','sigma','lambda', 'log_lik', 'sigma_total'))
+
+save(fit7, file = here("./Data/Output/STANMod7_v1.rds"))
 ```
 
 ```{r}
-save(fit7, file = here("./Data/Output/STANMod7_v1.rds"))
+
 
 posterior7 <- as.data.frame(fit7)
 
@@ -223,12 +226,14 @@ d_mat <- diag(1, 456, 456)
 
 stan_data8 <- list(N = N, x = x, y = y, K =K, d_mat = d_mat, A = A)
 
-fit8 <- stan(file = './StanModel3.stan', data = stan_data8, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1,
-             pars = c('beta','sigma','lambda', 'log_lik'))
+fit8 <- stan(file = './StanModel3.stan', data = stan_data8, warmup = 1000, iter = 5000, chains = 4, cores = 4, thin = 1,
+             pars = c('beta','sigma','lambda', 'log_lik', 'sigma_total'))
+
+save(fit8, file = here("./Data/Output/STANMod8_v1.rds"))
+
 ```
 
 ```{r}
-save(fit8, file = here("./Data/Output/STANMod8_v1.rds"))
 
 posterior8 <- as.data.frame(fit8)
 
@@ -249,12 +254,14 @@ d_mat <- diag(1, 456, 456)
 
 stan_data9 <- list(N = N, x = x, y = y, K =K, d_mat = d_mat, A = A)
 
-fit9 <- stan(file = './StanModel3.stan', data = stan_data9, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1,
-             pars = c('beta','sigma','lambda', 'log_lik'))
+fit9 <- stan(file = './StanModel3.stan', data = stan_data9, warmup = 1000, iter = 5000, chains = 4, cores = 4, thin = 1,
+             pars = c('beta','sigma','lambda', 'log_lik', 'sigma_total'))
+
+save(fit9, file = here("./Data/Output/STANMod9_v1.rds"))
+
 ```
 
 ```{r}
-save(fit9, file = here("./Data/Output/STANMod9_v1.rds"))
 
 posterior9 <- as.data.frame(fit9)
 
@@ -275,12 +282,14 @@ d_mat <- diag(1, 456, 456)
 
 stan_data10 <- list(N = N, x = x, y = y, K =K, d_mat = d_mat, A = A)
 
-fit10 <- stan(file = './StanModel3.stan', data = stan_data10, warmup = 500, iter = 1000, chains = 4, cores = 4, thin = 1,
-             pars = c('beta','sigma','lambda', 'log_lik'))
+fit10 <- stan(file = './StanModel3.stan', data = stan_data10, warmup = 1000, iter = 5000, chains = 4, cores = 4, thin = 1,
+             pars = c('beta','sigma','lambda', 'log_lik', 'sigma_total'))
+
+save(fit10, file = here("./Data/Output/STANMod10_v1.rds"))
+
 ```
 
 ```{r}
-save(fit10, file = here("./Data/Output/STANMod10_v1.rds"))
 
 posterior10 <- as.data.frame(fit10)
 
@@ -302,18 +311,49 @@ d_mat <- diag(1, 456, 456)
 
 stan_data11 <- list(N = N, x = x, y = y, K =K, d_mat = d_mat, A = A)
 
-fit11 <- stan(file = './StanModel3.stan', data = stan_data11, warmup = 500, iter = 2000, chains = 4, cores = 4, thin = 10,
-             pars = c('beta','sigma','lambda', 'log_lik'))
+fit11 <- stan(file = './StanModel3.stan', data = stan_data11, warmup = 1000, iter = 5000, chains = 4, cores = 4, thin = 1,
+             pars = c('beta','sigma','lambda', 'log_lik', 'sigma_total'))
+
+save(fit11, file = here("./Data/Output/STANMod11_v1.rds"))
+
 ```
 
+
 ```{r}
-save(fit11, file = here("./Data/Output/STANMod11_v1.rds"))
 
 posterior11 <- as.data.frame(fit11)
 
 fit11_summary <- summary(fit11, pars = c('beta[1]','beta[2]','beta[3]','beta[4]','beta[5]','beta[6]','sigma','lambda'), probs = c(0.025,0.975))$summary
 dimnames(fit11_summary)[[1]] <- c('alpha','beta','beta2 (size)','deepwater','pelagic','GSH:MaxSize','sigma','lambda')
 fit11_summary
+```
+
+
+## Model 12 - CFAR ~ GSH * MaxSize * PrimaryHabitat + Phylogeny
+
+```{r}
+data_matrix_12 <- model.matrix(~ Log10MeanGSH_centered * Log10MaxSize_centered * PrimaryHabitat, data = GSH_df_pgls)
+
+y <- GSH_df_pgls$Log10CFAR
+x <- data_matrix_12
+N <- length(GSH_df_pgls$Binomial)
+K <- ncol(x)
+d_mat <- diag(1, 456, 456)
+
+stan_data12 <- list(y = y, x = x, N = N, K = K, d_mat = d_mat, A = A)
+
+fit12 <- stan(file = './StanModel3.stan', data = stan_data12, warmup = 1000, iter = 5000, chains = 4, cores = 4, thin = 1, 
+              pars = c('beta', 'sigma', 'lambda', 'log_lik', 'sigma_total'))
+
+save(fit12, file = here('./Data/Output/STANMod12_v1.rds'))
+```
+
+```{r}
+posterior12 <- as.data.frame(fit12)
+
+fit12_summary <- summary(fit12, pars = c('beta[1]','beta[2]','beta[3]','beta[4]','beta[5]','beta[6]','sigma','lambda'), probs = c(0.025,0.975))$summary
+dimnames(fit10_summary)[[1]] <- c('alpha','beta','deepwater','pelagic','GSH:deepwater','GSH:pelagic','sigma','lambda')
+fit12_summary
 ```
 
 
