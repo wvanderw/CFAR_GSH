@@ -178,7 +178,17 @@ Link here for brms / stan correlation<https://discourse.mc-stan.org/t/covariance
 
 ## Plot the Tree
 ```{r}
-plot(SampleTree, type = 'fan', show.tip=F, edge.color = rainbow(1200))
+Tree <- plot.phylo(SampleTree, type = 'fan', show.tip=F, edge.color = rainbow(1200))
+
+png(here("./Data/Output/TreePlot.png"), width = 20, height = 15,
+    units = "cm", res = 800, bg = "transparent")
+
+plot.phylo(SampleTree, type = 'fan', show.tip=F, edge.color = rainbow(1200))
+
+dev.off()
+
+ggsave(here('./Data/Output/TreePlot.png'), plot = Tree, height = 8, width = 8, units = 'in', bg = 'transparent')
+
 ```
 
 ## pgls without brms or multiple levels
