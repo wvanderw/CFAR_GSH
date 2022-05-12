@@ -26,13 +26,13 @@ data {
         matrix[N, N] sigma_mat;
         matrix[N, N] sigma_total;
         
-        
+        vector[N] mu_y; //new addition
 
         sigma_mat = (1-lambda)*d_mat + lambda*A;
         sigma_total = sigma*sigma_mat;
         
-        
-
+        for(n in 1:N)
+        mu_y[n] = x[n] * beta; //new addition
       }
 
 // The model to be estimated. We model the output
@@ -44,7 +44,7 @@ model {
   lambda ~ uniform(0,1);
   sigma ~ cauchy(0, 10);
   
-  y ~ multi_normal(x * beta, sigma_total);
+  y ~ multi_normal(mu_y, sigma_total); //insert mu_y
 }
 
 // need to redefine to keep for comaprison
@@ -52,6 +52,6 @@ generated quantities {
  
         real log_lik;
         
-        log_lik = multi_normal_lpdf(y | x * beta, sigma_total);
+        log_lik = multi_normal_lpdf(y | mu_y, sigma_total); //insert mu_y
       
 }
