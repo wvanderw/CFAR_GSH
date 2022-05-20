@@ -227,7 +227,7 @@ stan_data6 <- list(N = N, x = x, y = y, K = K, d_mat = d_mat, A = A)
 compile <- stan_model(file = './StanModel3b.stan')
 
 fit6 <- stan(file = './StanModel3b.stan', data = stan_data6, warmup = 1000, iter = 5000, chains = 4, cores = 4, thin = 1,
-             pars = c('beta','sigma','lambda', 'log_lik', 'sigma_total'))
+             pars = c('beta','sigma','lambda', 'log_lik'))
   
 save(fit6, file = here("./Data/Output/STANMod6_v1.rds"))
 ```
@@ -371,7 +371,7 @@ d_mat <- diag(1, 456, 456)
 stan_data11 <- list(N = N, x = x, y = y, K =K, d_mat = d_mat, A = A)
 
 fit11 <- stan(file = './StanModel3.stan', data = stan_data11, warmup = 1000, iter = 5000, chains = 4, cores = 4, thin = 1,
-             pars = c('beta','sigma','lambda', 'log_lik', 'sigma_total'))
+             pars = c('beta','sigma','lambda', 'log_lik'))
 
 save(fit11, file = here("./Data/Output/STANMod11_v1.rds"))
 
