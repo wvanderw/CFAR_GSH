@@ -159,15 +159,17 @@ kbl(Table1.2, col.names = c('Model','Hypothesis'), booktabs = T, linesep = "") %
 
 1. brms model
 ```
-Model_plain <- brm(Log10CFAR ~ Log10MeanGSH_centered,
+brms_1 <- brm(Log10CFAR ~ Log10MeanGSH_centered,
                     data = GSH_df_pgls,
                     family = gaussian(),
-                    prior = Plain_prior
+                    prior = Plain_prior,
+                    warmup = 1000, iter = 5000,
+                    cores = 4
                     )
 ```
 
 ```{r echo=FALSE}
-kbl(fixef(Model_plain, summary = T), booktabs = T, linesep = "", caption = 'brms model summary') %>% 
+kbl(fixef(brms_1, summary = T), booktabs = T, linesep = "", caption = 'brms model summary') %>% 
   kable_styling(full_width = T, latex_options = c('striped','hold_position','scale_down'))
 
 ```

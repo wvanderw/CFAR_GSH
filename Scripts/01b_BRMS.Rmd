@@ -11,71 +11,74 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ###01_a -- PGLS Models for Ch. 1
 ## VanderWright, WJ
-## March 24, 2022
+## May 27, 2022
 
 ## Model 1 - CFAR ~ GSH
 
 ```{r}
-Plain_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered,
+brms_1_prior <- get_prior(Log10CFAR_centered ~ Log10MeanGSH_centered,
                     data = GSH_df_pgls,
                     family = gaussian())
 
 
-Model_plain <- brm(Log10CFAR ~ Log10MeanGSH_centered,
+brms_1 <- brm(Log10CFAR_centered ~ Log10MeanGSH_centered,
                     data = GSH_df_pgls,
                     family = gaussian(),
-                    #data2 = list(A = A), #don't need for this model
-                    prior = Plain_prior
+                    prior = brms_1_prior,
+                    warmup = 1000, iter = 5000,
+                    cores = 4
                     )
 
-summary(Model_plain)
+summary(brms_1)
 ```
 
 ```{r}
-plot(conditional_effects(Model_plain), points = TRUE)
+plot(conditional_effects(brms_1), points = TRUE)
 
 ```
 
 ## Model 2 - CFAR ~ GSH * Max Size
 ```{r}
-Size_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered,
+brms_2_prior <- get_prior(Log10CFAR_centered ~ Log10MeanGSH_centered * Log10MaxSize_centered,
                     data = GSH_df_pgls,
                     family = gaussian())
 
-Model_size <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered,
+brms_2 <- brm(Log10CFAR_centered ~ Log10MeanGSH_centered * Log10MaxSize_centered,
                     data = GSH_df_pgls,
                     family = gaussian(),
-                    #data2 = list(A = A), #don't need for this model
-                    prior = Size_prior
+                    prior = brms_2_prior,
+                    warmup = 1000, iter = 5000,
+                    cores = 4
                     )
 
-summary(Model_size)
+summary(brms_2)
 
 ```
 
 
 ```{r}
-plot(conditional_effects(Model_size), points = TRUE) #hit enter in the console
+plot(conditional_effects(brms_2), points = TRUE) #hit enter in the console
 
 ```
 
 ## Model 3 - CFAR ~ GSH + Max Size (No interaction)
 ```{r}
-Size_prior_2 <- get_prior(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered,
+brms_3_prior <- get_prior(Log10CFAR_centered ~ Log10MeanGSH_centered + Log10MaxSize_centered,
                     data = GSH_df_pgls,
                     family = gaussian())
 
-Model_size_2 <- brm(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered,
+brms_3 <- brm(Log10CFAR_centered ~ Log10MeanGSH_centered + Log10MaxSize_centered,
                     data = GSH_df_pgls,
                     family = gaussian(),
-                    #data2 = list(A = A), #don't need for this model
-                    prior = Size_prior_2)
+                    prior = brms_3_prior,
+                    warmup = 1000, iter = 5000,
+                    cores = 4)
 
-summary(Model_size_2)
+summary(brms_3)
 ```
 
 ```{r}
-plot(conditional_effects(Model_size_2), points = TRUE) #hit enter in the console
+plot(conditional_effects(brms_3), points = TRUE) #hit enter in the console
 
 
 
@@ -83,58 +86,60 @@ plot(conditional_effects(Model_size_2), points = TRUE) #hit enter in the console
 
 ## Model 4 - CFAR ~ GSH + PrimaryHabitat (No interaction)
 ```{r}
-habitat_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat,
+brms_4_prior <- get_prior(Log10CFAR_centered ~ Log10MeanGSH_centered + PrimaryHabitat,
                     data = GSH_df_pgls,
                     family = gaussian())
 
 #run time was about 30 minutes
-habitat_model <- brm(Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat,
+brms_4 <- brm(Log10CFAR_centered ~ Log10MeanGSH_centered + PrimaryHabitat,
                     data = GSH_df_pgls,
                     family = gaussian(),
-                    prior = habitat_prior,
-                    cores = 2)
+                    prior = brms_4_prior,
+                    cores = 4, warmup = 1000,
+                    iter = 5000)
 
-summary(habitat_model)
+summary(brms_4)
 
 
 ```
 
 
 ```{r}
-plot(conditional_effects(habitat_model), points = TRUE)
+plot(conditional_effects(brms_4), points = TRUE)
 
 ```
 
 ```{r}
-plot(habitat_model, N=2, ask = F)
+plot(brms_4, N=2, ask = F)
 ```
 
 
 ## Model 5 - CFAR ~ GSH * PrimaryHabitat
 ```{r}
-habitat_prior2 <- get_prior(Log10CFAR ~ Log10MeanGSH_centered * PrimaryHabitat,
+brms_5_prior <- get_prior(Log10CFAR_centered ~ Log10MeanGSH_centered * PrimaryHabitat,
                     data = GSH_df_pgls,
                     family = gaussian())
 
 #run time was about 30 minutes
-habitat_model_2 <- brm(Log10CFAR ~ Log10MeanGSH_centered * PrimaryHabitat,
+brms_5 <- brm(Log10CFAR_centered ~ Log10MeanGSH_centered * PrimaryHabitat,
                     data = GSH_df_pgls,
                     family = gaussian(),
-                    prior = habitat_prior2,
-                    cores = 2)
+                    prior = brms_5_prior,
+                    warmup = 1000, iter = 5000,
+                    cores = 4)
 
-summary(habitat_model_2)
+summary(brms_5)
 
 
 ```
 
 
 ```{r}
-plot(conditional_effects(habitat_model_2), points = TRUE)
+plot(conditional_effects(brms_5), points = TRUE, ask = F)
 ```
 
 ```{r}
-plot(habitat_model_2, N=2, ask = F)
+plot(brms_5, N=2, ask = F)
 
 ```
 
@@ -142,40 +147,41 @@ plot(habitat_model_2, N=2, ask = F)
 
 ## Model 6 - CFAR ~ GSH + Phylogeny
 ```{r}
-Simple_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered + (1|gr(Binomial, cov = B)),
+brms_6_prior <- get_prior(Log10CFAR_centered ~ Log10MeanGSH_centered + (1|gr(Binomial, cov = B)),
                     data = GSH_df_pgls,
                     family = gaussian(),
                     data2 = list(B = B))
 
 #run time was about 30 minutes
-Model_simple <- brm(Log10CFAR ~ Log10MeanGSH_centered + (1|gr(Binomial, cov = B)),
+brms_6 <- brm(Log10CFAR_centered ~ Log10MeanGSH_centered + (1|gr(Binomial, cov = B)),
                     data = GSH_df_pgls,
                     family = gaussian(),
                     data2 = list(B = B),
-                    prior = Simple_prior,
-                    cores = 2,
-                    save_pars = save_pars(all = TRUE))
+                    prior = brms_6_prior,
+                    cores = 4,
+                    warmup = 1000, iter = 5000)
 
-summary(Model_simple)
+summary(brms_6)
 
 
 ```
 
 
 ```{r}
-plot(conditional_effects(Model_simple), points = TRUE)
+plot(conditional_effects(brms_6), points = TRUE)
 
 ```
 
 ```{r}
-plot(Model_simple, N=2, ask = F)
+plot(brms_6, N=2, ask = F)
 
 ```
 
 
 ```{r}
+#lamda estimate
 hyp <- "sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0"
-(hyp <- hypothesis(Model_simple, hyp, class = NULL))
+(hyp <- hypothesis(brms_6, hyp, class = NULL))
 ```
 
 ```{r}
@@ -184,35 +190,36 @@ plot(hyp)
 
 ## Model 7 - CFAR ~ GSH * Max Size + Phylogeny
 ```{r}
-BS_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered + (1|gr(Binomial, cov = B)),
+brms_7_prior <- get_prior(Log10CFAR_centered ~ Log10MeanGSH_centered * Log10MaxSize_centered + (1|gr(Binomial, cov = B)),
                     data = GSH_df_pgls,
                     family = gaussian(),
                     data2 = list(B = B))
 
-Model_BS <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered + (1|gr(Binomial, cov = B)),
+brms_7 <- brm(Log10CFAR_centered ~ Log10MeanGSH_centered * Log10MaxSize_centered + (1|gr(Binomial, cov = B)),
                     data = GSH_df_pgls,
                     family = gaussian(),
                     data2 = list(B = B),
-                    prior = BS_prior,
-                sample_prior = TRUE, chains = 4, cores = 4)
+                    prior = brms_7_prior,
+                    chains = 4, cores = 4,
+                    warmup = 1000, iter = 5000)
 
-summary(Model_BS)
+summary(brms_7)
 ```
 
 
 ```{r}
-plot(conditional_effects(Model_BS), points = TRUE) #hit enter in console
+plot(conditional_effects(brms_7), points = TRUE, ask = F) 
 
 ```
 
 
 ```{r}
-plot(Model_BS, N=2, ask = F)
+plot(brms_7, N=2, ask = F)
 ```
 
 ```{r}
 hyp <- 'sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0'
-(hyp <- hypothesis(Model_BS, hyp, class = NULL))
+(hyp <- hypothesis(brms_7, hyp, class = NULL))
 ```
 
 ```{r}
@@ -221,23 +228,30 @@ plot(hyp)
 
 ## Model 8 - CFAR ~ GSH + Max Size + Phylogeny
 ```{r}
-BS_prior2 <- get_prior(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered + (1|gr(Binomial, cov = B)),
+brms_8_prior <- get_prior(Log10CFAR_centered ~ Log10MeanGSH_centered + Log10MaxSize_centered + (1|gr(Binomial, cov = B)),
                     data = GSH_df_pgls,
                     family = gaussian(),
                     data2 = list(B = B))
 
-Model_BS2 <- brm(Log10CFAR ~ Log10MeanGSH_centered + Log10MaxSize_centered + (1|gr(Binomial, cov = B)),
+brms_8 <- brm(Log10CFAR_centered ~ Log10MeanGSH_centered + Log10MaxSize_centered + (1|gr(Binomial, cov = B)),
                     data = GSH_df_pgls,
                     family = gaussian(),
                     data2 = list(B = B),
-                    prior = BS_prior2,
-                sample_prior = TRUE, chains = 4, cores = 4)
+                    prior = brms_8_prior,
+                    chains = 4, cores = 4,
+                    warmup = 1000, iter = 5000)
 
-summary(Model_BS2)
+summary(brms_8)
 ```
 
 ```{r}
-plot(conditional_effects(Model_BS2), points = TRUE)
+plot(conditional_effects(brms_8), points = TRUE, ask = F)
+```
+
+```{r}
+hyp <- 'sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0'
+(hyp <- hypothesis(brms_8, hyp, class = NULL))
+plot(hyp)
 ```
 
 

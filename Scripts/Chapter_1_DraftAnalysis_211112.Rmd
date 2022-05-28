@@ -48,12 +48,12 @@ caudal_fin <- function(height, area) {
 }
 
 #Centering data function
-center_scale <- function(x, y){
-  scale(x, center = y, scale = FALSE)
+center_scale <- function(x){
+  scale(x, center = mean(x), scale = TRUE)
 }
 
 #Run this and skip to line 348
-load(here('./Data/Output/CurrentDataState.RData'))
+#load(here('./Data/Output/CurrentDataState.RData'))
 
 
 ```
@@ -121,8 +121,7 @@ GSH_df <- GSH_df %>%
   rowwise() %>% 
   mutate(Log10MaxSize = log10(MaxLinearDimension))
 #center the Log10 Mean GSH column
-y <- mean(GSH_df$Log10MeanGSH)
-GSH_df$Log10MeanGSH_centered <- center_scale(GSH_df$Log10MeanGSH, y)
+GSH_df$Log10MeanGSH_centered <- center_scale(GSH_df$Log10MeanGSH)
 #force numeric
 GSH_df$Log10MeanGSH_centered <- as.numeric(GSH_df$Log10MeanGSH_centered)
 
@@ -146,8 +145,8 @@ SampleTree <- drop.tip(SampleTree, namedrops$tree_not_data)
 GSH_df_pgls <- subset(GSH_df, GSH_df$Binomial %nin% namedrops$data_not_tree) 
 
 #center the Log10 Max Size column
-z <- mean(GSH_df_pgls$Log10MaxSize)
-GSH_df_pgls$Log10MaxSize_centered <- center_scale(GSH_df_pgls$Log10MaxSize, z)
+GSH_df_pgls$Log10MaxSize_centered <- center_scale(GSH_df_pgls$Log10MaxSize)
+#force numeric
 GSH_df_pgls$Log10MaxSize_centered <- as.numeric(GSH_df_pgls$Log10MaxSize_centered)
 
 #change depth data to numeric (will have to drop NAs in depth models)
@@ -157,7 +156,7 @@ GSH_df_pgls$DepthMin_m_text <- as.numeric(GSH_df_pgls$DepthMin_m_text)
 
 #change habitats to factor
 GSH_df_pgls$PrimaryHabitat <- as.factor(GSH_df_pgls$PrimaryHabitat)
-#add contrast structure
+#add contrast structure for stan input
 contrasts(GSH_df_pgls$PrimaryHabitat) = contr.treatment(3)
 
 #order dataframe to match tree tip labels
@@ -187,7 +186,7 @@ plot.phylo(SampleTree, type = 'fan', show.tip=F, edge.color = rainbow(1200))
 
 dev.off()
 
-ggsave(here('./Data/Output/TreePlot.png'), plot = Tree, height = 8, width = 8, units = 'in', bg = 'transparent')
+#ggsave(here('./Data/Output/TreePlot.png'), plot = Tree, height = 8, width = 8, units = 'in', bg = 'transparent')
 
 ```
 
