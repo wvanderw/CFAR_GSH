@@ -257,57 +257,61 @@ plot(hyp)
 
 ## Model 9 - CFAR ~ GSH + PrimaryHabitat + Phylogeny
 ```{r}
-HabitatPhylo_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat + (1|gr(Binomial, cov = B)),
+brms_9_prior <- get_prior(Log10CFAR_centered ~ Log10MeanGSH_centered + PrimaryHabitat + (1|gr(Binomial, cov = B)),
                     data = GSH_df_pgls,
                     family = gaussian(),
                     data2 = list(B = B))
 
-HabitatPhylo <- brm(Log10CFAR ~ Log10MeanGSH_centered + PrimaryHabitat + (1|gr(Binomial, cov = B)),
+brms_9 <- brm(Log10CFAR_centered ~ Log10MeanGSH_centered + PrimaryHabitat + (1|gr(Binomial, cov = B)),
                     data = GSH_df_pgls,
                     family = gaussian(),
                     data2 = list(B = B),
-                    prior = HabitatPhylo_prior,
-                sample_prior = TRUE, chains = 4, cores = 4)
+                    prior = brms_9_prior,
+                    chains = 4, cores = 4,
+                    warmup = 1000, iter = 5000)
 
-summary(HabitatPhylo)
+summary(brms_9)
 ```
 
 ## Model 10 - CFAR ~ GSH * PrimaryHabitat + Phylogeny
 ```{r}
-HabitatPhylo_prior2 <- get_prior(Log10CFAR ~ Log10MeanGSH_centered * PrimaryHabitat + (1|gr(Binomial, cov = B)),
+brms_10_prior <- get_prior(Log10CFAR_centered ~ Log10MeanGSH_centered * PrimaryHabitat + (1|gr(Binomial, cov = B)),
                     data = GSH_df_pgls,
                     family = gaussian(),
                     data2 = list(B = B))
 
-HabitatPhylo2 <- brm(Log10CFAR ~ Log10MeanGSH_centered * PrimaryHabitat + (1|gr(Binomial, cov = B)),
+brms_10 <- brm(Log10CFAR_centered ~ Log10MeanGSH_centered * PrimaryHabitat + (1|gr(Binomial, cov = B)),
                     data = GSH_df_pgls,
                     family = gaussian(),
                     data2 = list(B = B),
-                    prior = HabitatPhylo_prior2,
-                sample_prior = TRUE, chains = 4, cores = 4)
+                    prior = brms_10_prior,
+                    chains = 4, cores = 4,
+                    warmup = 1000, iter = 5000)
 
-summary(HabitatPhylo2)
+summary(brms_10)
 ```
 
 
 ## Model 11 - CFAR ~ GSH * MaxSize + PrimaryHabitat + Phylogeny
 ```{r}
-SizeHabitatMod_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered + PrimaryHabitat + (1|gr(Binomial, cov = B)),
+brms_11_prior <- get_prior(Log10CFAR_centered ~ Log10MeanGSH_centered * Log10MaxSize_centered + PrimaryHabitat + (1|gr(Binomial, cov = B)),
                     data = GSH_df_pgls,
                     family = gaussian(),
                     data2 = list(B = B))
 
-SizeHabitatModel <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered + PrimaryHabitat + (1|gr(Binomial, cov = B)),
+brms_11 <- brm(Log10CFAR_centered ~ Log10MeanGSH_centered * Log10MaxSize_centered + PrimaryHabitat + (1|gr(Binomial, cov = B)),
                     data = GSH_df_pgls,
                     family = gaussian(),
                     data2 = list(B = B),
-                    prior = SizeHabitatMod_prior,
-                sample_prior = TRUE, chains = 4, cores = 4)
+                    prior = brms_11_prior,
+                    chains = 4, cores = 4,
+                    warmup = 1000, iter = 5000)
 
-summary(SizeHabitatModel)
+summary(brms_11)
 ```
+
 ```{r}
-plot(conditional_effects(SizeHabitatModel), points = TRUE)
+plot(conditional_effects(brms_11), points = TRUE, ask = F)
 ```
 
 
@@ -323,13 +327,14 @@ BRMS_12_Model <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered *
                     family = gaussian(),
                     data2 = list(B = B),
                     prior = BRMS_12_prior,
-                sample_prior = TRUE, chains = 4, cores = 4)
+                    chains = 4, cores = 4,
+                    warmup = 1000, iter = 5000)
 
 summary(BRMS_12_Model)
 ```
 
 ```{r}
-plot(conditional_effects(BRMS_12_Model), points = TRUE)
+plot(conditional_effects(BRMS_12_Model), points = TRUE, ask = F)
 ```
 
 
@@ -337,23 +342,23 @@ plot(conditional_effects(BRMS_12_Model), points = TRUE)
 ##LOO comapre (quick and dirty version)
 
 ```{r}
-fit1_loo <- loo(Model_plain)
-fit2_loo <- loo(Model_size)
-fit3_loo <- loo(Model_size_2)
-fit4_loo <- loo(habitat_model)
-fit5_loo <- loo(habitat_model_2)
+fit1_loo <- loo(brms_1)
+fit2_loo <- loo(brms_2)
+fit3_loo <- loo(brms_3)
+fit4_loo <- loo(brms_4)
+fit5_loo <- loo(brms_5)
 
 brms_loo_nonphylo_list <- list(fit1_loo, fit2_loo, fit3_loo, fit4_loo, fit5_loo)
 brms_loo_nonphylo <- loo_compare(brms_loo_nonphylo_list)
 loo_model_weights(brms_loo_nonphylo_list)
 
-fit6_loo <- loo(Model_simple, moment_match = TRUE, reloo = TRUE) #31, 74, 157, 183, 336, 451
-fit7_loo <- loo(Model_BS)
-fit8_loo <- loo(Model_BS2)
-fit9_loo <- loo(HabitatPhylo)
-fit10_loo <- loo(HabitatPhylo2)
-fit11_loo <- loo(SizeHabitatModel)
-fit12_loo <- loo(BRMS_12_Model)
+fit6_loo <- loo(brms_6, moment_match = TRUE, reloo = TRUE) #31, 74, 157, 183, 336, 451
+fit7_loo <- loo(brms_7)
+fit8_loo <- loo(brms_8)
+fit9_loo <- loo(brms_9)
+fit10_loo <- loo(brms_10)
+fit11_loo <- loo(brms_1)
+fit12_loo <- loo(brms_1)
 
 brms_loo_phylo_list <- list(fit6_loo, fit7_loo, fit8_loo, fit9_loo, fit10_loo, fit11_loo, fit12_loo)
 brms_loo_phylo <- loo_compare(brms_loo_phylo_list)
@@ -362,4 +367,9 @@ loo_model_weights(brms_loo_phylo_list)
 
 
 
+```
+
+### Save the environment
+```{r}
+save.image(here('./Data/Output/CurrentDataState.RData'))
 ```
