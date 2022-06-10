@@ -58,7 +58,7 @@ center_scale <- function(x){
 }
 
 #Run this and skip to line 348
-#load(here('./Data/Output/CurrentDataState.RData'))
+load(here('./Data/Output/CurrentDataState.RData'))
 
 
 ```

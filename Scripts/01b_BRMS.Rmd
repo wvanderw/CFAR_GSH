@@ -311,9 +311,14 @@ summary(brms_11)
 ```
 
 ```{r}
-plot(conditional_effects(brms_11), points = TRUE, ask = F)
+plot(brms_11, points = TRUE, ask = F)
 ```
 
+```{r}
+hyp <- 'sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0'
+(hyp <- hypothesis(brms_11, hyp, class = NULL))
+plot(hyp)
+```
 
 ##Model 12 -- CFAR ~ GSH * MaxSize * PrimaryHabitat + Phylogeny
 ```{r}
@@ -352,20 +357,21 @@ brms_loo_nonphylo_list <- list(fit1_loo, fit2_loo, fit3_loo, fit4_loo, fit5_loo)
 brms_loo_nonphylo <- loo_compare(brms_loo_nonphylo_list)
 loo_model_weights(brms_loo_nonphylo_list)
 
-fit6_loo <- loo(brms_6, moment_match = TRUE, reloo = TRUE) #31, 74, 157, 183, 336, 451
+fit6_loo <- loo(brms_6) #31, 74, 157, 183, 336, 451
 fit7_loo <- loo(brms_7)
 fit8_loo <- loo(brms_8)
 fit9_loo <- loo(brms_9)
 fit10_loo <- loo(brms_10)
-fit11_loo <- loo(brms_1)
-fit12_loo <- loo(brms_1)
+fit11_loo <- loo(brms_11)
+#fit12_loo <- loo(brms_12)
 
-brms_loo_phylo_list <- list(fit6_loo, fit7_loo, fit8_loo, fit9_loo, fit10_loo, fit11_loo, fit12_loo)
+brms_loo_phylo_list <- list(fit6_loo, fit7_loo, fit8_loo, fit9_loo, fit10_loo, fit11_loo)
 brms_loo_phylo <- loo_compare(brms_loo_phylo_list)
 loo_model_weights(brms_loo_phylo_list)
 
+LOO_Table <- as.data.frame(brms_loo_phylo, simplify = FALSE, digits = 3)
 
-
+write.csv(LOO_Table, file = here("./Data/Output/LOO_Table.csv"), row.names = T)
 
 ```
 
