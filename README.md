@@ -1,6 +1,6 @@
-# Metabolic morphology and ecological lifestyles in sharks :shark:
+# Ecological lifestyles and the metabolic morphology across sharks :shark:
 
-version control for first chapter -- will be duplicated for publication 
+version control for first chapter -- will be duplicated / cleaned for publication 
 
 Need to write file directory below :pizza:
 
@@ -12,7 +12,7 @@ Scripts
 01b_BRMS - models for analysis\
 01c_STAN - models for analysis\
 02a_DiagnosticPlots - Plots of model outputs\
-ModelComparison_220225 - Markdown file for model comparisons (to be deleted later)\
+ModelComparison_220225 - Markdown file for model comparisons (to be deleted later)
 
 Chapter_1_DraftAnalysis_211112 - big ugly script that will be deleted :squid:
 
