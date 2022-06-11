@@ -1,10 +1,10 @@
-##Metabolic morphology and ecological lifestyles in sharks :shark:
+# Metabolic morphology and ecological lifestyles in sharks :shark:
 
 version control for first chapter -- will be duplicated for publication 
 
 Need to write file directory below :pizza:
 
-#File structure
+## File structure
 
 Scripts
 00_DataWrangling - used to input and clean data
