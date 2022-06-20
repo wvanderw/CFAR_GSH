@@ -70,7 +70,7 @@ getwd()
 #load last workspace above and skip this ^^^^
 #
 
-# GSH Data ####
+# SotW GSH Data ####
 GSH_df <- read.csv(here('Data', 'Input', 'SharkGillSlitActivity210331 - Sheet1.csv'), header = T)
 #drop NAs
 GSH_df <- GSH_df %>% drop_na(GS1_proportionTL)
@@ -101,6 +101,25 @@ GSH_df[(GSH_df$Binomial == 'Lamiopsis_temmincki'), 'Binomial'] <- 'Lamiopsis_tem
 GSH_df[(GSH_df$Binomial == 'Carcharhinus_perezi'), 'Binomial'] <- 'Carcharhinus_perezii'
 GSH_df[(GSH_df$Binomial == 'Chiloscyllium_hasselti'), 'Binomial'] <- 'Chiloscyllium_hasseltii'
 
+
+# Cal Acad GSH and CFAR Data####
+#load data
+CalAcad <- read.csv(here('Data', 'Input', 'CalCFAR.csv'), header = T)
+#create binomial column
+CalAcad <- CalAcad %>% 
+  rowwise() %>% 
+  mutate(Binomial = paste(LikelyGenus, LikelySpecies, sep = '_'))
+#drop NA values from unknown species and specimens without tails
+CalAcad <- CalAcad %>% 
+  drop_na(Binomial, CFAR)
+
+CalAcad <- CalAcad[-7,]
+#fix typos
+CalAcad[(CalAcad$Binomial == 'Notorhynchus cepedianus_NA'), "Binomial"] <- 'Notorhynchus_cepedianus'
+CalAcad[(CalAcad$Binomial == 'Hexanchus_griseus?'), "Binomial"] <- 'Hexanchus_griseus'
+
+#physical specimens Data from last paper####
+VW_2020 <- 
 
 # Depth and habitat Data####
 #load data

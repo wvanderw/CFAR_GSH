@@ -1,0 +1,31 @@
+---
+title: "01a_PhysicalSpecimens"
+author: "Wade VanderWright"
+date: '2022-06-20'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 01a_PhysicalSpecimens - Comparison of physical specimens to field guide illustations
+## VanderWright, WJ
+## June 20, 2022
+
+
+#Create species distribution for samples >1
+```{r}
+
+```
+
+#Create average CI from above
+```{r}
+
+```
+
+#Compare single specimen species to average CI
+```{r}
+
+```
+

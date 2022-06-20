@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-###01_a -- PGLS Models for Ch. 1
+#01_b -- BRMS Models for Ch. 1
 ## VanderWright, WJ
 ## May 27, 2022
 
