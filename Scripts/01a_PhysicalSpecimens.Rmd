@@ -13,19 +13,143 @@ knitr::opts_chunk$set(echo = TRUE)
 ## VanderWright, WJ
 ## June 20, 2022
 
+#Fix binomial issues
+```{r}
+fix_list <- PhysSpec[which(PhysSpec$Binomial %nin% GSH_df_pgls$Binomial),]
+fix_list <- fix_list %>% 
+  distinct(Binomial, .keep_all = T)
+
+PhysSpec[(PhysSpec$Binomial == 'Eusphyrna_blochii'), 'Binomial'] = "Eusphyra_blochii"
+PhysSpec[(PhysSpec$Binomial == 'Centrophorus_uyato'), 'Binomial'] = "Centrophorus_uyato" #drop/not in 2013
+PhysSpec[(PhysSpec$Binomial == 'Hemipristis_elongatus'), 'Binomial'] = "Hemipristis_elongata"
+PhysSpec[(PhysSpec$Binomial == 'Rhizoprionodon_acutis'), 'Binomial'] = "Rhizoprionodon_acutus"
+PhysSpec[(PhysSpec$Binomial == 'Heptranchus_perlo'), 'Binomial'] = "Heptranchias_perlo"
+PhysSpec[(PhysSpec$Binomial == 'Notorhynchus_cepedianus'), 'Binomial'] = "Notorynchus_cepedianus"
+PhysSpec[(PhysSpec$Binomial == 'Carcahrhinus_tjutjot'), 'Binomial'] = "Carcharhinus_tjutjot"
+PhysSpec[(PhysSpec$Binomial == 'Paragaleus_randelli'), 'Binomial'] = "Paragaleus_randalli"
+PhysSpec[(PhysSpec$Binomial == 'Carcharhinus_cerdale'), 'Binomial'] = "Carcharhinus_cerdale"#drop/not in 2013
+
+
+fix_list <- PhysSpec[which(PhysSpec$Binomial %nin% GSH_df_pgls$Binomial),]
+
+PhysSpec <- PhysSpec[which(PhysSpec$Binomial %nin% fix_list$Binomial),]
+
+```
+
+
 
 #Create species distribution for samples >1
 ```{r}
+# count samples per species
+PhysSpec_count <- PhysSpec %>% 
+  count(Binomial)
+#filter count by species with more than 1 sample
+PhysSpec_count <- PhysSpec_count %>% 
+  filter(n > 1)
+#make a multiple sample list
+PhysSpec_mutli <- subset(PhysSpec, PhysSpec$Binomial %in% PhysSpec_count$Binomial)
+#make a single sample list
+PhysSpec_singles <- subset(PhysSpec, PhysSpec$Binomial %nin% PhysSpec_count$Binomial)
+# bootstrapping 
+# function to bootstrap (simulate) mean gill slit height proportions for each species
 
+bs_func <- function(x){
+  # new dataframe for each species
+    newdat <- PhysSpec_mutli %>% filter(., Binomial == x)
+  
+  # set seed so repeatable
+    set.seed(8) # go giants!
+  
+  # create a new dataframe with the Species' name and simulated GSH proportion data
+  
+    # generate new GSH proportion values drawn from a normal distribution with a mean and sd of each species GSH proportions
+    y <- rnorm(100, mean(newdat$MeanGSHPropTL), sd(newdat$MeanGSHPropTL))
+
+    # generate column of species name
+    x <- rep(x, 100)
+    
+    # merge
+    df <- data.frame(x,y)
+
+}
+
+# generate a vector of species names to apply the function to
+sp_list <- unique(PhysSpec_mutli$Binomial)
+
+# apply the function and create a new list of the output
+bs_values <- lapply(sp_list, bs_func)
+
+# turn the list into a dataframe
+bs_val <- bind_rows(bs_values) %>%
+          rename(Binomial = x,
+                 MeanGSHPropTL = y)
+#remove**
+bs_val_CI <- bs_val %>%
+             group_by(Binomial) %>%
+             dplyr::summarise(., quantile(MeanGSHPropTL, probs = c(0.025, 0.975)))
+
+
+quantile_func <- function(x){
+  # new dataframe for each species
+    newdat <- bs_val %>% filter(., Binomial == x)
+    
+    CI <- quantile(newdat$MeanGSHPropTL, probs = c(0.025,0.5, 0.975))
+    
+    CI
+}
+ 
+  
+CI_species <- sapply(sp_list, quantile_func)
+
+CI_species <- CI_species %>% round(4)
+
+gather.matrix <- function(mat) {
+  if (is.null(dimnames(mat))) {
+    grid <- expand.grid(seq.int(nrow(mat)), seq.int(ncol(mat)))
+  } else {
+    grid <- expand.grid(dimnames(mat))
+  }
+  cbind(grid, value = as.vector(mat))
+}
+
+CI_species <- gather.matrix(CI_species)
+
+write.csv(CI_species, file = here("./Data/Output/CalAcad_Physical_CIs.csv"))
 ```
 
 #Create average CI from above
 ```{r}
+CI_species <- CI_species %>% 
+  group_by(Var2) %>% 
+  mutate(CI_range = max(value) - min(value))
+
+CI_max <- max(CI_species$CI_range)
+CI_min <- min(CI_species$CI_range)
+CI_average <- mean(CI_species$CI_range)
 
 ```
 
-#Compare single specimen species to average CI
+#Create single specimen species with average CI
+```{r}
+PhysSpec_singles <- PhysSpec_singles %>% 
+  rowwise() %>% 
+  mutate(MeanGSHPropTL_upperCI = MeanGSHPropTL+(0.5*CI_average),
+         MeanGSHPropTL_lowerCI = MeanGSHPropTL-(0.5*CI_average))
+
+```
+
+#Get list of species from field guide that match physical specimens
 ```{r}
 
-```
+SotW <- GSH_df_pgls %>% 
+  filter(Binomial %in% PhysSpec$Binomial) 
 
+```
+#Left join SotW data to physical specimens
+```{r}
+#left join for multiples with CI
+
+#left join for singles
+
+
+```

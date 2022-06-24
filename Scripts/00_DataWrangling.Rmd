@@ -58,7 +58,7 @@ center_scale <- function(x){
 }
 
 #Run this and skip to line 348
-load(here('./Data/Output/CurrentDataState.RData'))
+#load(here('./Data/Output/CurrentDataState.RData'))
 
 
 ```
@@ -117,9 +117,40 @@ CalAcad <- CalAcad[-7,]
 #fix typos
 CalAcad[(CalAcad$Binomial == 'Notorhynchus cepedianus_NA'), "Binomial"] <- 'Notorhynchus_cepedianus'
 CalAcad[(CalAcad$Binomial == 'Hexanchus_griseus?'), "Binomial"] <- 'Hexanchus_griseus'
+#create proportional GSH to compare to drawings
+CalAcad <- CalAcad %>% 
+  rowwise() %>% 
+  mutate(MeanGSH_left = mean(na.omit(c(LGS1, LGS2, LGS3, LGS4, LGS5, LGS6, LGS7))),
+         MeanGSH_right = mean(na.omit(c(RGS1, RGS2, RGS3, RGS4, RGS5, RGS6, RGS7))),
+         MeanGSH_all = mean(na.omit(c(MeanGSH_left, MeanGSH_right))),
+         MeanGSHPropTL = MeanGSH_all/Total_length_cm)
 
-#physical specimens Data from last paper####
-VW_2020 <- 
+
+#physical specimens Data from last paper (GSH only)####
+VW_2020 <- read.csv(here('Data', 'Input', 'CLEAN_GSH_Data_20190402.csv'), header = T)
+#create binomial
+VW_2020 <- VW_2020 %>% 
+  rowwise() %>% 
+  mutate(Binomial = paste(Genus, Species, sep = '_'))
+#create mean GSH values
+VW_2020 <- VW_2020 %>% 
+  group_by(SampleID) %>% 
+  mutate(MeanGSH_all = mean(na.omit(c(GillSlitHeightCM_Arch1, GillSlitHeightCM_Arch2,
+                                      GillSlitHeightCM_Arch3,GillSlitHeightCM_Arch4,
+                                      GillSlitHeightCM_Arch5))),
+         MeanGSHPropTL = (MeanGSH_all/TLcm))
+#remove duplicates
+VW_2020 <- VW_2020 %>% 
+  distinct(SampleID, .keep_all = T)
+#select and stitch together useful columns
+#binomial, MeanGSH_all, MeanGSHPropTL, CFAR
+CalAcad <- CalAcad[,c(39,42,43,38)]
+#binomial, MeanGSH_all, MeanGSHPropTL
+VW_2020 <- VW_2020[,c(17,18,19)]
+#fill blank for CFAR
+VW_2020$CFAR <- NA
+#stitch
+PhysSpec <- rbind(CalAcad,VW_2020)
 
 # Depth and habitat Data####
 #load data
