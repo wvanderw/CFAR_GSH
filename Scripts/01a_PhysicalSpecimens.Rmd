@@ -68,8 +68,12 @@ bs_func <- function(x){
     # generate column of species name
     x <- rep(x, 100)
     
+    #Generate new CFAR proportion values based on normal distribution of samples
+    tmp <- replace(newdat, is.na(newdat), 0) #doesn't this drag down the mean?
+    z <- rnorm(100, mean(tmp$CFAR), sd(tmp$CFAR))
+    
     # merge
-    df <- data.frame(x,y)
+    df <- data.frame(x,y,z)
 
 }
 
@@ -82,26 +86,36 @@ bs_values <- lapply(sp_list, bs_func)
 # turn the list into a dataframe
 bs_val <- bind_rows(bs_values) %>%
           rename(Binomial = x,
-                 MeanGSHPropTL = y)
+                 MeanGSHPropTL = y,
+                 CFAR = z)
 #remove**
 bs_val_CI <- bs_val %>%
              group_by(Binomial) %>%
-             dplyr::summarise(., quantile(MeanGSHPropTL, probs = c(0.025, 0.975)))
+             dplyr::summarise(., quantile(MeanGSHPropTL, probs = c(0.025, 0.5, 0.975), na.rm = T),
+                              ., quantile(CFAR, probs = c(0.025, 0.5, 0.975), na.rm = T))
 
 
-quantile_func <- function(x){
+GSH_quantile_func <- function(x){
   # new dataframe for each species
     newdat <- bs_val %>% filter(., Binomial == x)
     
-    CI <- quantile(newdat$MeanGSHPropTL, probs = c(0.025,0.5, 0.975))
-    
-    CI
+    CI_GSH <- quantile(newdat$MeanGSHPropTL, probs = c(0.025,0.5, 0.975), na.rm = T)
+
+    CI_GSH
 }
  
+CFAR_quantile_func <- function(x){
+  newdat <- bs_val %>% filter(., Binomial == x)
   
-CI_species <- sapply(sp_list, quantile_func)
+  CI_CFAR <- quantile(newdat$CFAR, probs = c(0.025, 0.5, 0.975), na.rm=T)
+  
+  CI_CFAR
+}
+  
+GSH_CI_species <- sapply(sp_list, GSH_quantile_func)
 
-CI_species <- CI_species %>% round(4)
+CFAR_CI_species <- sapply(sp_list, CFAR_quantile_func)
+
 
 gather.matrix <- function(mat) {
   if (is.null(dimnames(mat))) {
@@ -112,7 +126,13 @@ gather.matrix <- function(mat) {
   cbind(grid, value = as.vector(mat))
 }
 
-CI_species <- gather.matrix(CI_species)
+GSH_CI_species <- gather.matrix(GSH_CI_species)
+
+CFAR_CI_species <- gather.matrix(CFAR_CI_species)
+
+CI_species <- left_join(GSH_CI_species, CFAR_CI_species, by = c("Var2", "Var1"))
+
+CI_species <- CI_species %>% mutate(value.y = if_else(value.y < 0, 0, value.y))
 
 write.csv(CI_species, file = here("./Data/Output/CalAcad_Physical_CIs.csv"))
 ```
@@ -121,11 +141,16 @@ write.csv(CI_species, file = here("./Data/Output/CalAcad_Physical_CIs.csv"))
 ```{r}
 CI_species <- CI_species %>% 
   group_by(Var2) %>% 
-  mutate(CI_range = max(value) - min(value))
+  mutate(GSH_CI_range = max(value.x) - min(value.x),
+         CFAR_CI_range = max(value.y) - min(value.y))
 
-CI_max <- max(CI_species$CI_range)
-CI_min <- min(CI_species$CI_range)
-CI_average <- mean(CI_species$CI_range)
+GSH_CI_max <- max(CI_species$GSH_CI_range)
+GSH_CI_min <- min(CI_species$GSH_CI_range)
+GSH_CI_average <- mean(CI_species$GSH_CI_range)
+
+CFAR_CI_max <- max(CI_species$CFAR_CI_range, na.rm = T)
+CFAR_CI_min <- min(CI_species$CFAR_CI_range, na.rm = T)
+CFAR_CI_average <- mean(CI_species$CFAR_CI_range, na.rm = T)
 
 ```
 
@@ -133,8 +158,13 @@ CI_average <- mean(CI_species$CI_range)
 ```{r}
 PhysSpec_singles <- PhysSpec_singles %>% 
   rowwise() %>% 
-  mutate(MeanGSHPropTL_upperCI = MeanGSHPropTL+(0.5*CI_average),
-         MeanGSHPropTL_lowerCI = MeanGSHPropTL-(0.5*CI_average))
+  mutate(MeanGSHPropTL_upperCI = MeanGSHPropTL + (0.5*GSH_CI_average),
+         MeanGSHPropTL_lowerCI = MeanGSHPropTL - (0.5*GSH_CI_average),
+         CFAR_upperCI = CFAR + (0.5*CFAR_CI_average),
+         CFAR_lowerCI = CFAR - (0.5*CFAR_CI_average))
+
+PhysSpec_singles <- PhysSpec_singles %>% mutate(CFAR_lowerCI = if_else(CFAR_lowerCI < 0, 0, CFAR_lowerCI))
+
 
 ```
 
@@ -148,8 +178,18 @@ SotW <- GSH_df_pgls %>%
 #Left join SotW data to physical specimens
 ```{r}
 #left join for multiples with CI
+colnames(CI_species) <- c('Var1','Binomial','value.x','value.y','GSH_CI_range', 'CFAR_CI_range')
 
+SotW_multi <- SotW %>% 
+  filter(Binomial %in% CI_species$Binomial) %>% 
+  select(Binomial, MeanGSH, CaudalAspect_proportion_TL)
+
+PhysSpec_mutli <- left_join(CI_species, SotW_multi, by = "Binomial" )
 #left join for singles
+SotW_singles <- SotW %>% 
+  filter(Binomial %in% PhysSpec_singles$Binomial) %>% 
+  select(Binomial, MeanGSH, CaudalAspect_proportion_TL)
 
+PhysSpec_singles <- left_join(PhysSpec_singles, SotW_singles, by = "Binomial")
 
 ```
