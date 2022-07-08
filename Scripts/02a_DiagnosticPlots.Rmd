@@ -11,19 +11,27 @@ knitr::opts_chunk$set(echo = TRUE)
 #Physical specimen Plots
 ##Multi specimen plot
 ```{r}
-#create selections of 
+#create new df for plotting
+library(forcats)
 
+df <- as_tibble(PhysSpec_mutli)
+df <- df[,c(2:ncol(df))]
+df$Binomial <- str_replace(df$Binomial, "_", " ")
 
 #GSH plot
-P1 <- ggplot(data = PhysSpec_mutli, aes(x = Binomial, y = value.x)) +
+P1 <- df %>% 
+  mutate(Binomial = fct_reorder(Binomial, desc(MeanGSH), .fun = 'median')) %>% 
+  ggplot(aes(x = Binomial, y =  value.x)) +
   geom_boxplot() +
-  geom_point(aes(x = Binomial, y = MeanGSH), data = PhysSpec_mutli, color = 'red') +
-  ylim(0.005,0.1) +
+  geom_point(aes(x = Binomial, y = MeanGSH), data = df, color = 'red') +
+  ylim(0.0,0.11) +
   theme_light() +
-  ylab("Mean Gill Slit Height") +
-  annotate("text", x = 28, y = 0.08, label = "16/32 = 50%") +
+  annotate("text", x = 30, y = 0.08, label = "16/32 = 50%") +
+    coord_flip() +
+  xlab("Species") +
 theme(axis.text.x = element_blank(),
       axis.title.x = element_blank(),
+      axis.text.y = element_text(face = 'italic'),
       panel.grid = element_blank())
 
 
@@ -33,75 +41,98 @@ P1
 
 #CFAR plot
 
-P2 <- ggplot(data = PhysSpec_mutli, aes(x = Binomial, y = value.y, drop = TRUE)) +
+P2 <- df %>% 
+  mutate(Binomial = fct_reorder(Binomial, desc(MeanGSH), .fun = 'median')) %>% 
+  ggplot(aes(x = Binomial, y = value.y, drop = TRUE)) +
   geom_boxplot() +
-  geom_point(aes(x = Binomial, y = CaudalAspect_proportion_TL), data = PhysSpec_mutli, color = 'red') +
+  geom_point(aes(x = Binomial, y = CaudalAspect_proportion_TL), data = df, color = 'red') +
   ylim(0,8) +
   ylab("CFAR") +
   xlab("Species") +
-  annotate("text", x = 28, y = 7, label = "26/29 = 90%") +
+  annotate("text", x = 30, y = 6, label = "26/29 = 90%") +
+      coord_flip() +
   theme_light() +
-  theme(axis.text.x = element_blank(),
+  theme(axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
         panel.grid = element_blank())
 
 P2
 
-26/29 *
+#26/29 *
   
 
 
 library(patchwork)
 
-P_multi <- P1 / P2
+P_multi <- P1 | P2
 P_multi
 ```
 
 ##Single specimen plot
 ```{r}
+df2 <- as_tibble(PhysSpec_singles)
+df2$Binomial <- str_replace(df2$Binomial, "_", " ")
+
 #GSH plot
-P3 <- ggplot(data = PhysSpec_singles, aes(x = Binomial, y = MeanGSHPropTL)) +
-  geom_segment(aes(xend = Binomial, y = MeanGSHPropTL_upperCI, yend = MeanGSHPropTL_lowerCI), lineend = "butt", color = 'grey') +
+P3 <- df2 %>% 
+  mutate(Binomial = fct_reorder(Binomial, desc(MeanGSH))) %>% 
+  ggplot(aes(x = Binomial, y = MeanGSHPropTL)) +
+  geom_segment(aes(xend = Binomial, y = MeanGSHPropTL_upperCI, yend = MeanGSHPropTL_lowerCI), lineend = "butt", color = 'grey', size = 2) +
+  geom_segment(aes(xend = Binomial, y = MeanGSHPropTL_maxCI, yend = MeanGSHPropTL_minCI), 
+               lineend = "butt", color = 'grey') +
   geom_point() +
-  geom_point(aes(x = Binomial, y = MeanGSH), data = PhysSpec_singles, color = 'red') +
-  ylim(0.005,0.1) +
-  annotate("text", x = 15, y = 0.08, label = "10/17 = 59%") +
+  geom_point(aes(x = Binomial, y = MeanGSH), data = df2, color = 'red') +
+  ylim(0.0,0.11) +
+  ylab("Mean Gill Slit Height") +
+  xlab("Species") +
+  annotate("text", x = 16, y = 0.08, label = "12/17 = 71%") +
+  coord_flip() +
   theme_light() +
-  theme(axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
+  theme(#axis.text.x = element_blank(),
+        axis.text.y = element_text(face = 'italic'),
+        #axis.title.x = element_blank(),
+        #axis.title.y = element_blank(),
         panel.grid = element_blank()) 
 P3
 
-10/17
+#10/17
 
 #CFAR plot
 
-P4 <- ggplot(data = PhysSpec_singles, aes(x = Binomial, y = CFAR, drop = TRUE)) +
-  geom_segment(aes(xend = Binomial, y = CFAR_upperCI, yend = CFAR_lowerCI), lineend = "butt", color = 'grey') +
+P4 <- df2 %>% 
+  mutate(Binomial = fct_reorder(Binomial, desc(MeanGSH))) %>%
+  ggplot(aes(x = Binomial, y = CFAR, drop = TRUE)) +
+  geom_segment(aes(xend = Binomial, y = CFAR_upperCI, yend = CFAR_lowerCI), lineend = "butt", color = 'grey', size = 2) +
+  geom_segment(aes(xend = Binomial, y = CFAR_maxCI, yend = CFAR_minCI), lineend = "butt", color = 'grey') +
   geom_point() +
-  geom_point(aes(x = Binomial, y = CaudalAspect_proportion_TL), data = PhysSpec_singles, color = 'red') +
+  geom_point(aes(x = Binomial, y = CaudalAspect_proportion_TL), data = df2, color = 'red') +
   ylim(0,8) +
   xlab("Species") +
-  annotate("text", x = 15, y = 7, label = "14/17 = 82%") +
+  annotate("text", x = 16, y = 6, label = "17/17 = 100%") +
+  coord_flip() +
   theme_light() +
   theme(axis.text.y = element_blank(),
-        axis.text.x = element_blank(),
+        #axis.text.x = element_blank(),
         axis.title.y = element_blank(),
         panel.grid = element_blank())
 
 P4
 
 
-P_singles <- P3 / P4
+P_singles <- P3 | P4
 P_singles
 ```
 
 ##Stitch them together
 ```{r}
-Fig1 <- P_multi | P_singles
+Fig1 <- P_multi / P_singles +
+  plot_annotation(tag_levels = 'A')
+Fig1
 
-png(here('./Data/Output/Figure1_PhysicalSpecimens_draft.png'), width = 40, height = 20,
+
+png(here('./Data/Output/Figure1_PhysicalSpecimens_draft.png'), width = 20, height = 30,
     units = "cm", res = 800, bg = "transparent")
 
 Fig1

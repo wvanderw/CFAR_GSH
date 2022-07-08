@@ -29,6 +29,7 @@ PhysSpec[(PhysSpec$Binomial == 'Carcahrhinus_tjutjot'), 'Binomial'] = "Carcharhi
 PhysSpec[(PhysSpec$Binomial == 'Paragaleus_randelli'), 'Binomial'] = "Paragaleus_randalli"
 PhysSpec[(PhysSpec$Binomial == 'Carcharhinus_cerdale'), 'Binomial'] = "Carcharhinus_cerdale"#drop/not in 2013
 
+#Check label cerdale <- porosus & uyato <- missing from SotW 2013
 
 fix_list <- PhysSpec[which(PhysSpec$Binomial %nin% GSH_df_pgls$Binomial),]
 
@@ -89,10 +90,10 @@ bs_val <- bind_rows(bs_values) %>%
                  MeanGSHPropTL = y,
                  CFAR = z)
 #remove**
-bs_val_CI <- bs_val %>%
-             group_by(Binomial) %>%
-             dplyr::summarise(., quantile(MeanGSHPropTL, probs = c(0.025, 0.5, 0.975), na.rm = T),
-                              ., quantile(CFAR, probs = c(0.025, 0.5, 0.975), na.rm = T))
+#bs_val_CI <- bs_val %>%
+ #            group_by(Binomial) %>%
+  #           dplyr::summarise(., quantile(MeanGSHPropTL, probs = c(0.025, 0.5, 0.975), na.rm = T),
+   #                           ., quantile(CFAR, probs = c(0.025, 0.5, 0.975), na.rm = T))
 
 
 GSH_quantile_func <- function(x){
@@ -160,10 +161,16 @@ PhysSpec_singles <- PhysSpec_singles %>%
   rowwise() %>% 
   mutate(MeanGSHPropTL_upperCI = MeanGSHPropTL + (0.5*GSH_CI_average),
          MeanGSHPropTL_lowerCI = MeanGSHPropTL - (0.5*GSH_CI_average),
+         MeanGSHPropTL_maxCI = MeanGSHPropTL + GSH_CI_average,
+         MeanGSHPropTL_minCI = MeanGSHPropTL - GSH_CI_average,
          CFAR_upperCI = CFAR + (0.5*CFAR_CI_average),
-         CFAR_lowerCI = CFAR - (0.5*CFAR_CI_average))
+         CFAR_lowerCI = CFAR - (0.5*CFAR_CI_average),
+         CFAR_maxCI = CFAR + CFAR_CI_average,
+         CFAR_minCI = CFAR - CFAR_CI_average)
 
-PhysSpec_singles <- PhysSpec_singles %>% mutate(CFAR_lowerCI = if_else(CFAR_lowerCI < 0, 0, CFAR_lowerCI))
+#make negative values 0
+PhysSpec_singles <- PhysSpec_singles %>% mutate(CFAR_lowerCI = if_else(CFAR_lowerCI < 0, 0, CFAR_lowerCI),
+                                                CFAR_minCI = if_else(CFAR_minCI <0, 0, CFAR_minCI))
 
 
 ```
