@@ -149,6 +149,8 @@ modelhyplist2 <- c(Model6_hyp, Model7_hyp, Model8_hyp, Model9_hyp, Model10_hyp,
 
 Table1.2 <- data.frame(modellist2, modelhyplist2)
 
+write.csv(Table1.2, file = here("./Data/Output/ModelDescriptions.csv"))
+
 kbl(Table1.2, col.names = c('Model','Hypothesis'), booktabs = T, linesep = "") %>% 
   kable_styling(latex_options = c("striped", "scale_down", "hold_position"), full_width = T)
 ```
@@ -955,8 +957,11 @@ SizeHabitatModel <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centere
 ```
 
 ```{r echo=FALSE}
-kbl(fixef(SizeHabitatModel, summary = T),caption = 'brms model 11 summary', booktabs = T, linesep = "")%>% 
+kbl(fixef(brms_11, summary = T),caption = 'brms model 11 summary', booktabs = T, linesep = "")%>% 
   kable_styling(latex_options = c("scale_down","hold_postion","striped"), full_width = T)
+Table11 <- data.frame(fixef(brms_11, summary = T))
+write.csv(Table11, file = here("./Data/Output/Model11_summary.csv"))
+
 ```
 
 

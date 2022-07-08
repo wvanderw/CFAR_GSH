@@ -311,6 +311,11 @@ summary(brms_11)
 ```
 
 ```{r}
+
+```
+
+
+```{r}
 plot(brms_11, points = TRUE, ask = F)
 ```
 
@@ -378,4 +383,8 @@ write.csv(LOO_Table, file = here("./Data/Output/LOO_Table.csv"), row.names = T)
 ### Save the environment
 ```{r}
 save.image(here('./Data/Output/CurrentDataState.RData'))
+
 ```
+
+
+
