@@ -383,8 +383,33 @@ post_11 %>%
 
 
 
-plot_11 <- ggplot(aes(x = Log10MeanGSH_centered, y = Log10CFAR_centered,  color = PrimaryHabitat), data = GSH_df_pgls) +
-  geom_point(alpha = 0.5) +
+plot_11 <- ggplot(aes(x = Log10MeanGSH_centered, y = Log10CFAR_centered,  color = PrimaryHabitat), data = GSH_df_pgls) 
+  
+
+#coastal
+  for (i in 1:500) {
+ plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_11, summary = F)[i,1], slope = fixef(brms_11, summary = F)[i,2], color = adjustcolor("#d95f02", alpha = 0.05), lty = 1) 
+} 
+
+#deepwater
+  for (i in 501:1000) {
+ plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_11, summary = F)[i,4], slope = fixef(brms_11, summary = F)[i,2], color = adjustcolor("#7570b3", alpha = 0.05), lty = 1) 
+} 
+
+#pelagic
+  for (i in 1001:1500) {
+ plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_11, summary = F)[i,5], slope = fixef(brms_11, summary = F)[i,2], color = adjustcolor("#1b9e77", alpha = 0.05), lty = 1) 
+} 
+
+#coastal
+plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_11)[1,1], slope = fixef(brms_11)[2,1], color = '#d95f02', size = 1.5)
+#deepwater
+plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_11)[4,1], slope = fixef(brms_11)[2,1], color = '#7570b3', size = 1.5)
+#pelagic
+plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_11)[5,1], slope = fixef(brms_11)[2,1], color = '#1b9e77', size = 1.5)
+
+
+plot_11 <- plot_11 + geom_point(alpha = 0.5) +
   scale_color_manual(values = c("Coastal" = "#d95f02",
                                 "Deepwater" = "#7570b3",
                                 "Pelagic" = "#1b9e77")) +
@@ -392,23 +417,104 @@ plot_11 <- ggplot(aes(x = Log10MeanGSH_centered, y = Log10CFAR_centered,  color 
   ggtitle(paste("Correlation=", cor(GSH_df_pgls$Log10CFAR, GSH_df_pgls$Log10MeanGSH_centered)))+
        xlab("Log10 GSH (proportion of TL)")+
        ylab("Log10 CFAR") 
-
-
-  for (i in 1:500) {
- plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_11, summary = F)[i,1], slope = fixef(brms_11, summary = F)[i,2], color = adjustcolor("gray", alpha = 0.15), lty = 1) 
-} 
-
-plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_11)[1,1], slope = fixef(brms_11)[2,1], color = 'black')
-  
-
-
-
   
 
 
 plot_11
 
 ggsave(here('./Data/Output/Model11_plot.png'), plot_11, height = 20, width = 30, units = 'cm')
-  
+
+
+```
+
+
+
+```{r}
+library(insight)
+library(bayestestR)
+# S3 method for brmsfit
+brms_11_post <- get_parameters(
+  brms_11,
+  effects = "fixed",
+  component = "all",
+  parameters = NULL,
+  summary = FALSE,
+  centrality = "mean"
+)
+
+head(brms_11_post)
+
+brms_11_CI <- ci(brms_11, method = "HDI", component = 'all')
+
+brms_11_CI$CI_low[1]
+
+
+out <- estimate_density(brms_11_post, extend = T, select = 'b_Intercept')
+
+#intercept - coastal
+out_IC <- estimate_density(brms_11_post, extend = T, select = 'b_Intercept')
+
+I_C <- ggplot(out_IC, aes(x = x, y = y)) +
+  geom_area(fill = 'red')+
+  geom_vline(xintercept = brms_11_CI$CI_low[1], color = 'royalblue', size = 3)+
+  geom_vline(xintercept = brms_11_CI$CI_high[1], color = 'royalblue', size = 3)
+
+I_C
+
+#intercept - deepwater
+out_ID <- estimate_density(brms_11_post, extend = T, select = 'b_PrimaryHabitat2')
+
+I_D <- ggplot(out_ID, aes(x = x, y = y)) +
+  geom_area(fill = 'red')+
+  geom_vline(xintercept = brms_11_CI$CI_low[4], color = 'royalblue', size = 3)+
+  geom_vline(xintercept = brms_11_CI$CI_high[4], color = 'royalblue', size = 3)
+
+I_D
+#intercept - pelagic
+out_IP <- estimate_density(brms_11_post, extend = T, select = 'b_PrimaryHabitat3')
+
+I_P <- ggplot(out_IP, aes(x = x, y = y)) +
+  geom_area(fill = 'red')+
+  geom_vline(xintercept = brms_11_CI$CI_low[5], color = 'royalblue', size = 3)+
+  geom_vline(xintercept = brms_11_CI$CI_high[5], color = 'royalblue', size = 3)
+
+I_P
+#slope - CFAR ~ GSH
+out_SG <- estimate_density(brms_11_post, extend = T, select = 'b_Log10MeanGSH_centered')
+
+S_G <- ggplot(out_SG, aes(x = x, y = y)) +
+  geom_area(fill = 'red')+
+  geom_vline(xintercept = brms_11_CI$CI_low[2], color = 'royalblue', size = 3)+
+  geom_vline(xintercept = brms_11_CI$CI_high[2], color = 'royalblue', size = 3)
+
+S_G
+#slope - CFAR ~ Size
+out_SS <- estimate_density(brms_11_post, extend = T, select = 'b_Log10MaxSize_centered')
+
+S_S <- ggplot(out_SS, aes(x = x, y = y)) +
+  geom_area(fill = 'red')+
+  geom_vline(xintercept = brms_11_CI$CI_low[3], color = 'royalblue', size = 3)+
+  geom_vline(xintercept = brms_11_CI$CI_high[3], color = 'royalblue', size = 3)
+
+S_S
+#interaction GSH:Size
+out_GS <- estimate_density(brms_11_post, extend = T, select = 'b_Log10MeanGSH_centered:Log10MaxSize_centered')
+
+Int_GS <- ggplot(out_GS, aes(x = x, y = y)) +
+  geom_area(fill = 'red')+
+  geom_vline(xintercept = brms_11_CI$CI_low[6], color = 'royalblue', size = 3)+
+  geom_vline(xintercept = brms_11_CI$CI_high[6], color = 'royalblue', size = 3)
+
+Int_GS
+#sigma
+out_sigma <- estimate_density(brms_11_post, extend = T, select = 'sigma')
+
+
+SIG <- ggplot(out_sigma, aes(x = x, y = y)) +
+  geom_area(fill = 'red')+
+  geom_vline(xintercept = brms_11_CI$CI_low[7], color = 'royalblue', size = 3)+
+  geom_vline(xintercept = brms_11_CI$CI_high[7], color = 'royalblue', size = 3)
+
+SIG
 ```
 
