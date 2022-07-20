@@ -200,3 +200,76 @@ SotW_singles <- SotW %>%
 PhysSpec_singles <- left_join(PhysSpec_singles, SotW_singles, by = "Binomial")
 
 ```
+
+
+### PCA bit
+
+```{r}
+library(ggfortify)
+
+GSH_PCA <- GSH_df_pgls
+
+GSH_PCA <- GSH_PCA %>% 
+  drop_na(CaudalAspect_proportion_TL)
+
+corr_mat <- as.matrix(round(cor(GSH_PCA[,c(18,19,26,27)]),2))
+
+corr_mat[upper.tri(corr_mat)] <- NA
+
+corr_mat
+
+pca_vals <- prcomp(GSH_PCA[,c(18,19,27)], center = T, scale = T)
+
+summary(pca_vals)
+
+pca_points <- as_tibble(pca_vals$x) %>% bind_cols(GSH_PCA)
+
+pca_plot <- ggplot(pca_points, aes(x = PC1, y = PC2)) +
+  geom_point(aes(colour = PrimaryHabitat)) +
+  scale_color_manual(values = c("Coastal" = "#d95f02",
+                                "Deepwater" = "#7570b3",
+                                "Pelagic" = "#1b9e77")) +
+  theme_light()
+
+pca_hull <- pca_points %>% 
+  group_by(PrimaryHabitat) %>% 
+  slice(chull(PC1, PC2))
+
+chull_plot <- pca_plot +
+  geom_polygon(data = pca_hull, aes(fill = PrimaryHabitat, colour = PrimaryHabitat),
+               alpha = 0.3, show.legend = F) +
+  scale_color_manual(values = c("Coastal" = "#d95f02",
+                                "Deepwater" = "#7570b3",
+                                "Pelagic" = "#1b9e77")) +
+  scale_fill_manual(values = c("Coastal" = "#d95f02",
+                                "Deepwater" = "#7570b3",
+                                "Pelagic" = "#1b9e77"))
+
+chull_plot
+
+pca_load <- as_tibble(pca_vals$rotation, rownames = 'variable') %>% 
+  mutate(variable = dplyr::recode(variable, 
+                                  'TailHeight_proportionTL' = 'Tail height',
+                                  'TailArea_proportionTL' = 'Tail area',
+                                  'MeanGSH' = 'Mean GSH', 
+                                  'CaudalAspect_proportion_TL' = 'CFAR'))
+head(pca_load)
+
+chull_plot2 <- chull_plot +
+  geom_segment(data = pca_load, 
+               aes(x = 0, y = 0, 
+                   xend = PC1*5,
+                   yend = PC2*5),
+               arrow = arrow(length = unit(1/2, 'picas'))) +
+  annotate('text', x = (pca_load$PC1*6), y = (pca_load$PC2*5.2),
+           label = pca_load$variable,
+           size = 3.5) +
+  xlab('PC1 (77.70%)')+
+  ylab('PC2 (21.98%)')
+
+chull_plot2
+
+ggsave(here('./Data/Output/PCA_plot_v2.png'), chull_plot2, height = 15, width = 25, units = 'cm')
+
+```
+
