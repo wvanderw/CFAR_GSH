@@ -327,13 +327,13 @@ plot(hyp)
 
 ##Model 12 -- CFAR ~ GSH * MaxSize * PrimaryHabitat + Phylogeny
 ```{r}
-BRMS_12_prior <- get_prior(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered * PrimaryHabitat + (1|gr(Binomial, cov = B)),
-                    data = GSH_df_pgls,
+BRMS_12_prior <- get_prior(Log10MeanGSH_centered ~ Log10CFAR_centered * PrimaryHabitat + Log10MaxSize_centered + (1|gr(Binomial, cov = B)),
+                    data = GSH_df_pgls2,
                     family = gaussian(),
                     data2 = list(B = B))
 
-BRMS_12_Model <- brm(Log10CFAR ~ Log10MeanGSH_centered * Log10MaxSize_centered * PrimaryHabitat + (1|gr(Binomial, cov = B)),
-                    data = GSH_df_pgls,
+BRMS_12_Model <- brm(Log10MeanGSH_centered ~ Log10CFAR_centered * PrimaryHabitat + Log10MaxSize_centered + (1|gr(Binomial, cov = B)),
+                    data = GSH_df_pgls2,
                     family = gaussian(),
                     data2 = list(B = B),
                     prior = BRMS_12_prior,
@@ -347,6 +347,27 @@ summary(BRMS_12_Model)
 plot(conditional_effects(BRMS_12_Model), points = TRUE, ask = F)
 ```
 
+##Model 13 -- CFAR ~ GSH * PrimaryHabitat + MaxSize + Phylogeny
+```{r}
+brms_13_prior <- get_prior(Log10MeanGSH_centered ~ Log10CFAR_centered + PrimaryHabitat + Log10MaxSize_centered + (1|gr(Binomial, cov = B)),
+                    data = GSH_df_pgls2,
+                    family = gaussian(),
+                    data2 = list(B = B))
+
+brms_13 <- brm(Log10MeanGSH_centered ~ Log10CFAR_centered + PrimaryHabitat + Log10MaxSize_centered + (1|gr(Binomial, cov = B)),
+                    data = GSH_df_pgls2,
+                    family = gaussian(),
+                    data2 = list(B = B),
+                    prior = brms_13_prior,
+                    chains = 4, cores = 4,
+                    warmup = 1000, iter = 5000)
+
+summary(brms_13)
+```
+
+```{r}
+plot(conditional_effects(brms_13, effects = "Log10CFAR_centered", conditions = data.frame(PrimaryHabitat = c("Coastal", "Deepwater", "Pelagic"))), points = T, ask = F)
+```
 
 
 ##LOO comapre (quick and dirty version)
@@ -368,9 +389,10 @@ fit8_loo <- loo(brms_8)
 fit9_loo <- loo(brms_9)
 fit10_loo <- loo(brms_10)
 fit11_loo <- loo(brms_11)
-#fit12_loo <- loo(brms_12)
+fit12_loo <- loo(BRMS_12_Model)
+fit13_loo <- loo(brms_13)
 
-brms_loo_phylo_list <- list(fit6_loo, fit7_loo, fit8_loo, fit9_loo, fit10_loo, fit11_loo)
+brms_loo_phylo_list <- list(fit6_loo, fit7_loo, fit8_loo, fit9_loo, fit10_loo, fit11_loo, fit12_loo, fit13_loo)
 brms_loo_phylo <- loo_compare(brms_loo_phylo_list)
 loo_model_weights(brms_loo_phylo_list)
 
