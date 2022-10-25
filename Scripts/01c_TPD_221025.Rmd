@@ -1,0 +1,22 @@
+---
+title: "01c_TPD_221025"
+author: "Wade VanderWright"
+date: '2022-10-25'
+output: html_document
+---
+
+```{r}
+library(TPD)
+```
+
+```{r}
+#traits
+traits_CFAR <- GSH_df_pgls[,c("TailHeight_proportionTL", "TailArea_proportionTL")]
+habitat_CFAR <- GSH_df_pgls[,c("PrimaryHabitat")]
+TPD_CFAR <- TPD::TPDs(habitat_CFAR, traits_CFAR)
+```
+
+```{r}
+
+```
+

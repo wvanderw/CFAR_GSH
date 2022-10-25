@@ -508,7 +508,7 @@ I_P <- ggplot(out_IP, aes(x = x, y = y)) +
 
 I_P
 #slope - CFAR ~ GSH
-out_SG <- estimate_density(brms_13_post, extend = T, select = 'b_Log10MeanGSH_centered')
+out_SG <- estimate_density(brms_13_post, extend = T, select = 'b_Log10CFAR_centered')
 
 S_G <- ggplot(out_SG, aes(x = x, y = y)) +
   geom_area(fill = '#7570b3')+
