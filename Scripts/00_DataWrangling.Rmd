@@ -167,20 +167,31 @@ Habitat <- Habitat %>%
 #save missing species for later
 missing.habitat <- GSH_df[(GSH_df$Binomial %nin% Habitat$Genus_species),]
 #trim unused columns from habitat sheet
-Habitat <- Habitat[,c(10,22,23,29,33,34)]
+Habitat <- Habitat[,c(10,22,23,29,31,33,34)]
 #join dataframes
 GSH_df <- left_join(GSH_df, Habitat, by = c('Binomial' = 'Genus_species'))
 GSH_df$MaxLinearDimension <- as.numeric(GSH_df$MaxLinearDimension)
+GSH_df$DepthMax_m_text <- as.numeric(GSH_df$DepthMax_m_text)
+GSH_df$Log10DepthMax <- log10(GSH_df$DepthMax_m_text)
+GSH_df$DepthMin_m_text <- as.numeric(GSH_df$DepthMin_m_text)
+GSH_df$Log10DepthMin <- log10(GSH_df$DepthMin_m_text)
+GSH_df$Log10DepthMax[which(GSH_df$Log10DepthMax == -Inf)] = -1
+GSH_df$Log10DepthMin[which(GSH_df$Log10DepthMin == -Inf)] = -1
+
 #Log the maximum size column
 GSH_df <- GSH_df %>% 
   rowwise() %>% 
-  mutate(Log10MaxSize = log10(MaxLinearDimension))
+  mutate(Log10MaxSize = log10(MaxLinearDimension),
+         MedianDepth_m = mean(c(DepthMin_m_text, DepthMax_m_text)),
+         Log10DepthMedian = mean(c(Log10DepthMax, Log10DepthMin)))
 #center the Log10 Mean GSH column
 GSH_df$Log10MeanGSH_centered <- center_scale(GSH_df$Log10MeanGSH)
 #force numeric
 GSH_df$Log10MeanGSH_centered <- as.numeric(GSH_df$Log10MeanGSH_centered)
-
-
+#center scale depths
+GSH_df$Log10DepthMax_centered <- (GSH_df$Log10DepthMax - mean(GSH_df$Log10DepthMax, na.rm = TRUE)) / sd(GSH_df$Log10DepthMax, na.rm = TRUE)
+GSH_df$Log10DepthMin_centered <- (GSH_df$Log10DepthMin - mean(GSH_df$Log10DepthMin, na.rm = TRUE)) / sd(GSH_df$Log10DepthMin, na.rm = TRUE)
+GSH_df$Log10DepthMedian_centered <- (GSH_df$Log10DepthMedian - mean(GSH_df$Log10DepthMedian, na.rm = TRUE)) / sd(GSH_df$Log10DepthMedian, na.rm = TRUE)
 
 ###Phylo Data####
 #read in the 10000 trees
@@ -204,15 +215,15 @@ GSH_df_pgls$Log10MaxSize_centered <- center_scale(GSH_df_pgls$Log10MaxSize)
 #force numeric
 GSH_df_pgls$Log10MaxSize_centered <- as.numeric(GSH_df_pgls$Log10MaxSize_centered)
 
+#species area
+GSH_df_pgls$area_sqkm <- as.numeric(GSH_df_pgls$area_sqkm)
+GSH_df_pgls$Log10Area <- log10(GSH_df_pgls$area_sqkm)
+GSH_df_pgls$Log10Area_centered <- (GSH_df_pgls$Log10Area - mean(GSH_df_pgls$Log10Area, na.rm = TRUE)) / sd(GSH_df_pgls$Log10Area, na.rm = TRUE)
+
 #center the Log10 CFAR column
 GSH_df_pgls$Log10CFAR_centered <- center_scale(GSH_df_pgls$Log10CFAR)
 #force numeric
 GSH_df_pgls$Log10CFAR_centered <- as.numeric(GSH_df_pgls$Log10CFAR_centered)
-
-#change depth data to numeric (will have to drop NAs in depth models)
-GSH_df_pgls$DepthMax_m_text <- as.numeric(GSH_df_pgls$DepthMax_m_text)
-
-GSH_df_pgls$DepthMin_m_text <- as.numeric(GSH_df_pgls$DepthMin_m_text)
 
 #change habitats to factor
 GSH_df_pgls$PrimaryHabitat <- as.factor(GSH_df_pgls$PrimaryHabitat)
@@ -224,6 +235,8 @@ target <- SampleTree$tip.label
 
 GSH_df_pgls <- GSH_df_pgls %>% 
   arrange(factor(GSH_df_pgls$Binomial, levels = target))
+
+GSH_df_pgls <- GSH_df_pgls %>% drop_na(Log10DepthMedian_centered, area_sqkm)
 
 #covariance matrix (STAN)
 A <- ape::vcv.phylo(SampleTree, corr = TRUE)

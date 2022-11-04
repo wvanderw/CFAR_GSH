@@ -11,8 +11,10 @@ library(TPD)
 
 ```{r}
 #traits
-traits_CFAR <- GSH_df_pgls[,c("TailHeight_proportionTL", "TailArea_proportionTL")]
-habitat_CFAR <- GSH_df_pgls[,c("PrimaryHabitat")]
+GSH_df_traits <- GSH_df_pgls %>% drop_na(MedianDepth_m)
+
+traits_CFAR <- GSH_df_traits[,c("TailHeight_proportionTL", "TailArea_proportionTL")]
+habitat_CFAR <- GSH_df_traits[,c("MedianDepth_m")]
 TPD_CFAR <- TPD::TPDs(habitat_CFAR, traits_CFAR)
 ```
 
