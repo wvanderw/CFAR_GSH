@@ -180,10 +180,9 @@ dev.off()
 
 ```{r}
 color_scheme_set("brightblue")
-brms_11 %>%
+brms_9 %>%
   posterior_predict(draws = 500) %>%
-  ppc_stat_grouped(y = GSH_df_pgls$Log10CFAR_centered,
-                   group = GSH_df_pgls$PrimaryHabitat,
+  ppc_stat(y = GSH_df_pgls$Log10MeanGSH_centered,
                    stat = "mean")
 ```
 
@@ -266,9 +265,9 @@ ggsave(here('./Data/Output/PPC_plot1.png'), PPC_plot1, device = 'png', height = 
 
 ```{r}
 Prez_plot <- GSH_df_pgls %>% 
-  data_grid(Log10MeanGSH_centered = seq_range(Log10MeanGSH_centered, 100), Binomial, Log10MaxSize_centered, PrimaryHabitat) %>% 
-  add_epred_draws(brms_11, ndraws = 10) %>% 
-  ggplot(aes(x = Log10MeanGSH_centered, y = Log10CFAR_centered, color = PrimaryHabitat), fill = PrimaryHabitat) +
+  data_grid(Log10CFAR_centered = seq_range(Log10CFAR_centered, 100), Binomial, Log10MaxSize_centered, Log10DepthMedian_centered) %>% 
+  add_epred_draws(brms_9, ndraws = 10) %>% 
+  ggplot(aes(y = Log10MeanGSH_centered, x = Log10CFAR_centered, color = Log10DepthMedian_centered), fill = Log10DepthMedian_centered) +
   stat_lineribbon(aes(y = .prediction), .width = c(.95, .80, .50), alpha = .25)+
   geom_point(data = GSH_df_pgls)+
   scale_fill_brewer(palette = 'Greys')+
@@ -349,13 +348,13 @@ set.seed(11)
 grid = data.frame(GSH_df_pgls)
   
 means = grid %>%
-  add_epred_draws(brms_11)
+  add_epred_draws(brms_9)
 
 preds = grid %>%
-  add_predicted_draws(brms_11)
+  add_predicted_draws(brms_9)
 
 ppc_habitat <- GSH_df_pgls %>%
-  ggplot(aes(x = Log10CFAR_centered, y = PrimaryHabitat)) +
+  ggplot(aes(x = Log10MeanGSH_centered)) +
   stat_halfeye(aes(x = .epred), scale = 0.6, position = position_nudge(y = 0.175), data = means) +
   stat_interval(aes(x = .prediction), data = preds) +
   geom_point(data = GSH_df_pgls) +
@@ -388,7 +387,7 @@ plot_11 <- ggplot(aes(x = Log10CFAR_centered, y = Log10MeanGSH_centered,  color 
 
 #coastal
   for (i in 1:500) {
- plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_13, summary = F)[i,1], slope = fixef(brms_13, summary = F)[i,2], color = adjustcolor("#d95f02", alpha = 0.05), lty = 1) 
+ plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_9, summary = F)[i,1], slope = fixef(brms_9, summary = F)[i,2], color = adjustcolor("#1b9e77", alpha = 0.05), lty = 1) 
 } 
 
 #deepwater
@@ -402,17 +401,15 @@ plot_11 <- ggplot(aes(x = Log10CFAR_centered, y = Log10MeanGSH_centered,  color 
 } 
 
 #coastal
-plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_13)[1,1], slope = fixef(brms_13)[2,1], color = '#d95f02', size = 1.5)
+plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_9)[1,1], slope = fixef(brms_9)[2,1], color = '#1b9e77', size = 1.5)
 #deepwater
 plot_11 <- plot_11 + geom_abline(intercept = (fixef(brms_13)[1,1]+fixef(brms_13)[3,1]), slope = fixef(brms_13)[2,1], color = '#7570b3', size = 1.5)
 #pelagic
 plot_11 <- plot_11 + geom_abline(intercept = (fixef(brms_13)[1,1]+fixef(brms_13)[4,1]), slope = fixef(brms_13)[2,1], color = '#1b9e77', size = 1.5)
 
 
-plot_11 <- plot_11 + geom_point(alpha = 0.5) +
-  #scale_color_manual(values = c("Coastal" = "#d95f02",
-  #                              "Deepwater" = "#7570b3",
-  #                              "Pelagic" = "#1b9e77")) +
+plot_11b <- plot_11 + geom_point(alpha = 0.5) +
+  scale_color_gradient(low = 'white', high = '#7570b3')+
   theme_bw()+
   ggtitle(paste("Correlation=", cor(GSH_df_pgls$Log10CFAR, GSH_df_pgls$Log10MeanGSH_centered)))+
        ylab("Log10 GSH (proportion of TL)")+
@@ -420,9 +417,11 @@ plot_11 <- plot_11 + geom_point(alpha = 0.5) +
   
 
 
-plot_11
+plot_11b
 
-ggsave(here('./Data/Output/Model9_plot.png'), plot_11, height = 20, width = 30, units = 'cm')
+ggsave(here('./Data/Output/Model9_plot.png'), plot_11b, height = 20, width = 30, units = 'cm')
+
+
 
 
 ```
@@ -508,7 +507,7 @@ I_P <- ggplot(out_IP, aes(x = x, y = y)) +
 
 I_P
 #slope - CFAR ~ GSH
-out_SG <- estimate_density(brms_13_post, extend = T, select = 'b_Log10CFAR_centered')
+out_SG <- estimate_density(brms_9_post, extend = T, select = 'b_Log10CFAR_centered')
 
 S_G <- ggplot(out_SG, aes(x = x, y = y)) +
   geom_area(fill = '#7570b3')+
