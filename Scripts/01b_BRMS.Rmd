@@ -205,6 +205,22 @@ write.csv(Table_4, file = here("./Data/Output/Model9_summary.csv"))
 Table_4
 ```
 
+### VIF check
+```{r}
+library(car)
+
+linear_mod <- lm(Log10MeanGSH_centered ~ Log10CFAR_centered + Log10MaxSize_centered + Log10DepthMedian_centered, data = GSH_df_pgls)
+
+vif(linear_mod)
+```
+
+```{r}
+data <- GSH_df_pgls[,c("Log10MeanGSH_centered", "Log10CFAR_centered", "Log10MaxSize_centered", "Log10DepthMedian_centered")]
+
+cor(data)
+```
+
+
 
 ### Save the environment
 ```{r}
