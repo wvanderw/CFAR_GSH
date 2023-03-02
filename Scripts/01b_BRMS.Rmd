@@ -198,11 +198,29 @@ write.csv(LOO_Table, file = here("./Data/Output/LOO_Table.csv"), row.names = T)
 brms_loo_phylo
 ```
 
-## Summary of best models
+## Summary of models
 ```{r}
+tbl1_title <- data.frame("Model 1 - Activity",NA,NA,NA)
+names(tbl1_title) <- names(Table_1)
+Table_1 <- data.frame(round(fixef(brms_1, summary = TRUE), 2))
+tbl2_title <- data.frame("Model 2 - Size",NA,NA,NA)
+names(tbl2_title) <- names(Table_1)
+Table_2 <- data.frame(round(fixef(brms_2, summary = TRUE), 2))
+tbl3_title <- data.frame("Model 3 - Depth",NA,NA,NA)
+names(tbl3_title) <- names(Table_1)
+Table_3 <- data.frame(round(fixef(brms_3, summary = TRUE), 2))
+tbl4_title <- data.frame("Model 4 - Ecological lifestyle",NA,NA,NA)
+names(tbl4_title) <- names(Table_1)
 Table_4 <- data.frame(round(fixef(brms_4, summary = TRUE), 2))
-write.csv(Table_4, file = here("./Data/Output/Model9_summary.csv"))
-Table_4
+
+
+Table_5 <- rbind(tbl1_title,Table_1,
+                 tbl2_title,Table_2,
+                 tbl3_title,Table_3,
+                 tbl4_title,Table_4)
+
+write.csv(Table_5, file = here("./Data/Output/Model_summaries_230302.csv"))
+Table_5
 ```
 
 ### VIF check
