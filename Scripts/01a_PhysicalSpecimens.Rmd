@@ -212,61 +212,68 @@ GSH_PCA <- GSH_df_pgls
 GSH_PCA <- GSH_PCA %>% 
   drop_na(CaudalAspect_proportion_TL)
 
-corr_mat <- as.matrix(round(cor(GSH_PCA[,c(18,19,26,27)]),2))
+corr_mat <- as.matrix(round(cor(GSH_PCA[,c(41,44,45,48)]),2))
 
 corr_mat[upper.tri(corr_mat)] <- NA
 
 corr_mat
 
-pca_vals <- prcomp(GSH_PCA[,c(18,19,26,27,34,39)], center = T, scale = T)
+pca_vals <- prcomp(GSH_PCA[,c(41,44,45,48)], center = T, scale = T)
 
 summary(pca_vals)
+
+GSH_PCA <- GSH_PCA %>% 
+  mutate(Log10DepthMedian_centered2 = as.factor(round(Log10DepthMedian_centered)),
+         Log10MaxSize_centered2 <- as.factor(round(Log10MaxSize_centered)))
+
 
 pca_points <- as_tibble(pca_vals$x) %>% bind_cols(GSH_PCA)
 
 pca_plot <- ggplot(pca_points, aes(x = PC1, y = PC2)) +
-  geom_point(aes(colour = PrimaryHabitat)) +
-  scale_color_manual(values = c("Coastal" = "#d95f02",
-                                "Deepwater" = "#7570b3",
-                                "Pelagic" = "#1b9e77")) +
+  geom_point(aes(colour = Log10DepthMedian_centered2)) +
+  #scale_color_manual(values = c("Coastal" = "#d95f02",
+   #                             "Deepwater" = "#7570b3",
+    #                            "Pelagic" = "#1b9e77")) +
   theme_light()
 
 pca_hull <- pca_points %>% 
-  group_by(PrimaryHabitat) %>% 
+  group_by(Log10DepthMedian_centered2) %>% 
   slice(chull(PC1, PC2))
 
 chull_plot <- pca_plot +
-  geom_polygon(data = pca_hull, aes(fill = PrimaryHabitat, colour = PrimaryHabitat),
-               alpha = 0.3, show.legend = F) +
-  scale_color_manual(values = c("Coastal" = "#d95f02",
-                                "Deepwater" = "#7570b3",
-                                "Pelagic" = "#1b9e77")) +
-  scale_fill_manual(values = c("Coastal" = "#d95f02",
-                                "Deepwater" = "#7570b3",
-                                "Pelagic" = "#1b9e77"))
+  geom_polygon(data = pca_hull, aes(color = Log10DepthMedian_centered2, 
+                                    fill = Log10DepthMedian_centered2),
+               alpha = 0.3, show.legend = F) 
 
 chull_plot
 
 pca_load <- as_tibble(pca_vals$rotation, rownames = 'variable') %>% 
   mutate(variable = dplyr::recode(variable, 
-                                  'TailHeight_proportionTL' = 'Tail height',
-                                  'TailArea_proportionTL' = 'Tail area',
-                                  'MeanGSH' = 'Mean GSH', 
-                                  'CaudalAspect_proportion_TL' = 'CFAR',
-                                  'MaxLinearDimension' = 'Max Size',
-                                  'MedianDepth_m' = 'Depth'))
+                                  'Log10MeanGSH_centered' = 'Mean GSH',
+                                  'Log10DepthMedian_centered' = 'Depth',
+                                  'Log10MaxSize_centered' = 'Max Size',
+                                  'Log10CFAR_centered' = 'CFAR'))
 head(pca_load)
 
 
 pca_load_labels <- pca_load %>% 
   transmute(variable, PC1 = PC1*7, PC2 = PC2*7)
+#gsh
+pca_load_labels[1,3] <- pca_load_labels[1,3]-0.1
+pca_load_labels[1,2] <- pca_load_labels[1,2]+0.5
 
-pca_load_labels[1,3] <- pca_load_labels[1,3]+0
-pca_load_labels[2,3] <- pca_load_labels[2,3]-0.25
-pca_load_labels[3,3] <- pca_load_labels[3,3]-0.05
-pca_load_labels[4,3] <- pca_load_labels[4,3]+0.25
-pca_load_labels[5,3] <- pca_load_labels[5,3]+0.35
-pca_load_labels[6,3] <- pca_load_labels[6,3]-1.5
+#depth
+pca_load_labels[2,3] <- pca_load_labels[2,3]-.95
+pca_load_labels[2,2] <- pca_load_labels[2,2]-.75
+
+#size
+pca_load_labels[3,3] <- pca_load_labels[3,3]+0.1
+pca_load_labels[3,2] <- pca_load_labels[3,2]+0.5
+
+#cfar
+pca_load_labels[4,3] <- pca_load_labels[4,3]-1
+pca_load_labels[4,2] <- pca_load_labels[4,2]+0.6
+
 
 
 
@@ -282,7 +289,7 @@ chull_plot2 <- chull_plot +
   xlab('PC1 (55.04%)')+
   ylab('PC2 (17.46%)')+
   theme_bw() +
-  theme(legend.position = c(0.2,0.8),
+  theme(legend.position = c(0.15,0.15),
         legend.background = element_blank()) 
 
 chull_plot2
