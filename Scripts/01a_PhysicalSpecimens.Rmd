@@ -354,8 +354,8 @@ chull_plot4 <- chull_plot +
   geom_text(data = pca_load_labels,
            aes(label = variable),
            size = 3.5) +
-  xlab('PC1 (55.04%)')+
-  ylab('PC2 (17.46%)')+
+  xlab('PC1 (60.91%)')+
+  ylab('PC2 (18.11%)')+
   theme_bw() +
   theme(legend.position = c(0.15,0.15),
         legend.background = element_blank()) 

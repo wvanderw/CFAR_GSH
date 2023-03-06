@@ -168,12 +168,55 @@ plot(conditional_effects(brms_4, effects = "Log10CFAR_centered",
 ```
 
 ```{r}
+#lamda estimate
+hyp <- "sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0"
+(hyp <- hypothesis(brms_4, hyp, class = NULL))
+plot(hyp)
+```
+
+
+```{r}
 pp_check(brms_4)
 ```
 
 ```{r}
 plot(conditional_effects(brms_4), points = TRUE, ask = FALSE)
 ```
+## R2 vals
+```{r}
+bayes_R2(brms_1)
+```
+
+```{r}
+bayes_R2(brms_2)
+```
+
+```{r}
+bayes_R2(brms_3)
+```
+
+```{r}
+bayes_R2(brms_4)
+```
+
+## pp checks
+
+```{r}
+pp_check(brms_1, ndraws = 150)
+```
+
+```{r}
+pp_check(brms_2, ndraws = 150)
+```
+
+```{r}
+pp_check(brms_3, ndraws = 150)
+```
+
+```{r}
+pp_check(brms_4, ndraws = 150)
+```
+
 
 
 
