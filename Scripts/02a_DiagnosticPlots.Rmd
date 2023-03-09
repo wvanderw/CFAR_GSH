@@ -563,3 +563,12 @@ ggsave(here('./Data/Output/boxplot_habitat.png'), boxplot, height = 20, width = 
 
 ```
 
+
+# Coef plot
+
+```{r}
+bayesplot::mcmc_areas(brms_4)
+```
+
+
+
