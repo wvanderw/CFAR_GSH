@@ -18,31 +18,31 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Model 1 - GSH ~ CFAR
 
 ```{r}
-brms_1_prior <- get_prior(LogMeanGSH_centered ~ LogCFAR_centered + (1|gr(Binomial, cov = B)),
-                    data = GSH_df_full,
-                    data2 = list(B = B),
+brms_5_prior <- get_prior(LogMeanGSH_centered ~ LogCFAR_centered + (1|gr(Binomial, cov = D)),
+                    data = GSH_df_seq,
+                    data2 = list(D = D),
                     family = gaussian())
 
 
-brms_1 <- brm(LogMeanGSH_centered ~ LogCFAR_centered + (1|gr(Binomial, cov = B)),
-                    data = GSH_df_full,
-                    data2 = list(B = B),
+brms_5 <- brm(LogMeanGSH_centered ~ LogCFAR_centered + (1|gr(Binomial, cov = D)),
+                    data = GSH_df_seq,
+                    data2 = list(D = D),
                     family = gaussian(),
-                    prior = brms_1_prior,
+                    prior = brms_5_prior,
                     warmup = 1000, iter = 5000,
                     cores = 4
                     )
 
-summary(brms_1)
+summary(brms_5)
 ```
 
 ```{r}
-plot(conditional_effects(brms_1), points = TRUE)
+plot(conditional_effects(brms_5), points = TRUE)
 
 ```
 
 ```{r}
-plot(brms_1, N=2, ask = F)
+plot(brms_5, N=2, ask = F)
 
 ```
 
@@ -50,7 +50,7 @@ plot(brms_1, N=2, ask = F)
 ```{r}
 #lamda estimate
 hyp <- "sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0"
-(hyp <- hypothesis(brms_1, hyp, class = NULL))
+(hyp <- hypothesis(brms_5, hyp, class = NULL))
 ```
 
 
@@ -60,32 +60,32 @@ plot(hyp)
 
 ## Model 2 - GSH ~ Max Size
 ```{r}
-brms_2_prior <- get_prior(LogMeanGSH_centered ~ LogMaxSize_centered + (1|gr(Binomial, cov = B)),
-                    data = GSH_df_full,
-                    data2 = list(B = B),
+brms_6_prior <- get_prior(LogMeanGSH_centered ~ LogMaxSize_centered + (1|gr(Binomial, cov = D)),
+                    data = GSH_df_seq,
+                    data2 = list(D = D),
                     family = gaussian())
 
-brms_2 <- brm(LogMeanGSH_centered ~ LogMaxSize_centered + (1|gr(Binomial, cov = B)),
-                    data = GSH_df_full,
-                    data2 = list(B = B),
+brms_6 <- brm(LogMeanGSH_centered ~ LogMaxSize_centered + (1|gr(Binomial, cov = D)),
+                    data = GSH_df_seq,
+                    data2 = list(D = D),
                     family = gaussian(),
-                    prior = brms_2_prior,
+                    prior = brms_6_prior,
                     warmup = 1000, iter = 5000,
                     cores = 4
                     )
 
-summary(brms_2)
+summary(brms_6)
 
 ```
 
 
 ```{r}
-plot(conditional_effects(brms_2), points = TRUE) #hit enter in the console
+plot(conditional_effects(brms_6), points = TRUE) #hit enter in the console
 
 ```
 
 ```{r}
-plot(brms_2, N=2, ask = F)
+plot(brms_6, N=2, ask = F)
 
 ```
 
@@ -93,7 +93,7 @@ plot(brms_2, N=2, ask = F)
 ```{r}
 #lamda estimate
 hyp <- "sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0"
-(hyp <- hypothesis(brms_2, hyp, class = NULL))
+(hyp <- hypothesis(brms_6, hyp, class = NULL))
 ```
 ```{r}
 plot(hyp)
@@ -102,33 +102,33 @@ plot(hyp)
 
 ## Model 3 - GSH ~ Median Depth 
 ```{r}
-brms_3_prior <- get_prior(LogMeanGSH_centered ~ LogDepthMedian_centered + (1|gr(Binomial, cov = B)),
-                    data = GSH_df_full,
+brms_7_prior <- get_prior(LogMeanGSH_centered ~ LogDepthMedian_centered + (1|gr(Binomial, cov = D)),
+                    data = GSH_df_seq,
                     family = gaussian(),
-                    data2 = list(B = B))
+                    data2 = list(D = D))
 
 #run time was about 30 minutes
-brms_3 <- brm(LogMeanGSH_centered ~ LogDepthMedian_centered + (1|gr(Binomial, cov = B)),
-                    data = GSH_df_full,
+brms_7 <- brm(LogMeanGSH_centered ~ LogDepthMedian_centered + (1|gr(Binomial, cov = D)),
+                    data = GSH_df_seq,
                     family = gaussian(),
-                    data2 = list(B = B),
-                    prior = brms_3_prior,
+                    data2 = list(D = D),
+                    prior = brms_7_prior,
                     cores = 4,
                     warmup = 1000, iter = 5000)
 
-summary(brms_3)
+summary(brms_7)
 
 
 ```
 
 
 ```{r}
-plot(conditional_effects(brms_3), points = TRUE)
+plot(conditional_effects(brms_7), points = TRUE)
 
 ```
 
 ```{r}
-plot(brms_3, N=2, ask = F)
+plot(brms_7, N=2, ask = F)
 
 ```
 
@@ -136,7 +136,7 @@ plot(brms_3, N=2, ask = F)
 ```{r}
 #lamda estimate
 hyp <- "sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0"
-(hyp <- hypothesis(brms_3, hyp, class = NULL))
+(hyp <- hypothesis(brms_7, hyp, class = NULL))
 ```
 
 ```{r}
@@ -146,76 +146,76 @@ plot(hyp)
 
 ## Model 4 - CFAR ~ GSH + MaxSize + Median Depth
 ```{r}
-brms_4_prior <- get_prior(LogMeanGSH_centered ~ LogCFAR_centered + LogMaxSize_centered + LogDepthMedian_centered + (1|gr(Binomial, cov = B)),
-                    data = GSH_df_full,
+brms_8_prior <- get_prior(LogMeanGSH_centered ~ LogCFAR_centered + LogMaxSize_centered + LogDepthMedian_centered + (1|gr(Binomial, cov = D)),
+                    data = GSH_df_seq,
                     family = gaussian(),
-                    data2 = list(B = B))
+                    data2 = list(D = D))
 
-brms_4 <- brm(LogMeanGSH_centered ~ LogCFAR_centered + LogMaxSize_centered + LogDepthMedian_centered + (1|gr(Binomial, cov = B)),
-                    data = GSH_df_full,
+brms_8 <- brm(LogMeanGSH_centered ~ LogCFAR_centered + LogMaxSize_centered + LogDepthMedian_centered + (1|gr(Binomial, cov = D)),
+                    data = GSH_df_seq,
                     family = gaussian(),
-                    data2 = list(B = B),
+                    data2 = list(D = D),
                     prior = brms_4_prior,
                     chains = 4, cores = 4,
                     warmup = 1000, iter = 5000)
 
-summary(brms_4)
+summary(brms_8)
 ```
 
 ```{r}
 conditions <- data.frame(LogDepthMedian_centered = c(-1, 0, 1))
-plot(conditional_effects(brms_4, effects = "LogCFAR_centered",
-                         conditions = conditions,  spaghetti = FALSE, ndraws = 1000), points = TRUE)
+plot(conditional_effects(brms_8, effects = "LogCFAR_centered",
+                         conditions = conditions,  spaghetti = TRUE, ndraws = 1000), points = TRUE)
 ```
 
 ```{r}
 #lamda estimate
 hyp <- "sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0"
-(hyp <- hypothesis(brms_4, hyp, class = NULL))
+(hyp <- hypothesis(brms_8, hyp, class = NULL))
 plot(hyp)
 ```
 
 
 ```{r}
-pp_check(brms_4)
+pp_check(brms_8)
 ```
 
 ```{r}
-plot(conditional_effects(brms_4), points = TRUE, ask = FALSE)
+plot(conditional_effects(brms_8), points = TRUE, ask = FALSE)
 ```
 ## R2 vals
 ```{r}
-bayes_R2(brms_1)
+bayes_R2(brms_5)
 ```
 
 ```{r}
-bayes_R2(brms_2)
+bayes_R2(brms_6)
 ```
 
 ```{r}
-bayes_R2(brms_3)
+bayes_R2(brms_7)
 ```
 
 ```{r}
-bayes_R2(brms_4)
+bayes_R2(brms_8)
 ```
 
 ## pp checks
 
 ```{r}
-pp_check(brms_1, ndraws = 150)
+pp_check(brms_5, ndraws = 150)
 ```
 
 ```{r}
-pp_check(brms_2, ndraws = 150)
+pp_check(brms_6, ndraws = 150)
 ```
 
 ```{r}
-pp_check(brms_3, ndraws = 150)
+pp_check(brms_7, ndraws = 150)
 ```
 
 ```{r}
-pp_check(brms_4, ndraws = 150)
+pp_check(brms_8, ndraws = 150)
 ```
 
 
@@ -225,37 +225,37 @@ pp_check(brms_4, ndraws = 150)
 ##LOO comapre (quick and dirty version)
 
 ```{r}
-fit1_loo <- loo(brms_1)
-fit2_loo <- loo(brms_2)
-fit3_loo <- loo(brms_3)
-fit4_loo <- loo(brms_4)
+fit5_loo <- loo(brms_5)
+fit6_loo <- loo(brms_6)
+fit7_loo <- loo(brms_7)
+fit8_loo <- loo(brms_8)
 
 
-brms_loo_phylo_list <- list(fit1_loo, fit2_loo, fit3_loo, fit4_loo)
-brms_loo_phylo <- loo_compare(brms_loo_phylo_list)
-loo_model_weights(brms_loo_phylo_list)
+brms_loo_phylo_list <- list(fit5_loo, fit6_loo, fit7_loo, fit8_loo)
+brms_loo_phylo_seq <- loo_compare(brms_loo_phylo_list)
+loo_model_weights_2(brms_loo_phylo_list)
 
-LOO_Table <- data.frame(round(brms_loo_phylo, 2))
+LOO_Table_2 <- data.frame(round(brms_loo_phylo_seq, 2))
 
-write.csv(LOO_Table, file = here("./Data/Output/LOO_Table.csv"), row.names = T)
+write.csv(LOO_Table_2, file = here("./Data/Output/LOO_Table_2.csv"), row.names = T)
 
-brms_loo_phylo
+brms_loo_phylo_seq
 ```
 
 ## Summary of models
 ```{r}
 tbl1_title <- data.frame("Model 1 - Activity",NA,NA,NA)
 names(tbl1_title) <- names(Table_1)
-Table_1 <- data.frame(round(fixef(brms_1, summary = TRUE), 2))
+Table_1 <- data.frame(round(fixef(brms_5, summary = TRUE), 2))
 tbl2_title <- data.frame("Model 2 - Size",NA,NA,NA)
 names(tbl2_title) <- names(Table_1)
-Table_2 <- data.frame(round(fixef(brms_2, summary = TRUE), 2))
+Table_2 <- data.frame(round(fixef(brms_6, summary = TRUE), 2))
 tbl3_title <- data.frame("Model 3 - Depth",NA,NA,NA)
 names(tbl3_title) <- names(Table_1)
-Table_3 <- data.frame(round(fixef(brms_3, summary = TRUE), 2))
+Table_3 <- data.frame(round(fixef(brms_7, summary = TRUE), 2))
 tbl4_title <- data.frame("Model 4 - Ecological lifestyle",NA,NA,NA)
 names(tbl4_title) <- names(Table_1)
-Table_4 <- data.frame(round(fixef(brms_4, summary = TRUE), 2))
+Table_4 <- data.frame(round(fixef(brms_8, summary = TRUE), 2))
 
 
 Table_5 <- rbind(tbl1_title,Table_1,
@@ -263,7 +263,7 @@ Table_5 <- rbind(tbl1_title,Table_1,
                  tbl3_title,Table_3,
                  tbl4_title,Table_4)
 
-write.csv(Table_5, file = here("./Data/Output/Model_summaries_230302.csv"))
+write.csv(Table_5, file = here("./Data/Output/Model_summaries_seq_230412.csv"))
 Table_5
 ```
 
@@ -271,13 +271,13 @@ Table_5
 ```{r}
 library(car)
 
-linear_mod <- lm(Log10MeanGSH_centered ~ Log10CFAR_centered + Log10MaxSize_centered + Log10DepthMedian_centered, data = GSH_df_pgls)
+linear_mod <- lm(Log10MeanGSH_centered ~ Log10CFAR_centered + Log10MaxSize_centered + Log10DepthMedian_centered, data = GSH_df_seq)
 
 vif(linear_mod)
 ```
 
 ```{r}
-data <- GSH_df_pgls[,c("Log10MeanGSH_centered", "Log10CFAR_centered", "Log10MaxSize_centered", "Log10DepthMedian_centered")]
+data <- GSH_df_seq[,c("LogMeanGSH_centered", "LogCFAR_centered", "LogMaxSize_centered", "LogDepthMedian_centered")]
 
 cor(data)
 ```
@@ -289,10 +289,10 @@ cor(data)
 save.image(here('./Data/Output/CurrentDataState.RData'))
 
 
-saveRDS(brms_1, here("Data", "Output", "brms_1.rds"))
-saveRDS(brms_2, here("Data", "Output", "brms_2.rds"))
-saveRDS(brms_3, here("Data", "Output", "brms_3.rds"))
-saveRDS(brms_4, here("Data", "Output", "brms_4.rds"))
+saveRDS(brms_5, here("Data", "Output", "brms_1.rds"))
+saveRDS(brms_6, here("Data", "Output", "brms_2.rds"))
+saveRDS(brms_7, here("Data", "Output", "brms_3.rds"))
+saveRDS(brms_8, here("Data", "Output", "brms_4.rds"))
 ```
 
 
