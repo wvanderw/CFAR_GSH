@@ -91,8 +91,8 @@ GSH_df <- GSH_df %>%
 GSH_df <- GSH_df %>%
   rowwise() %>% 
   mutate("CaudalAspect_proportion_TL" = caudal_fin(TailHeight_proportionTL, TailArea_proportionTL)) %>% 
-  mutate(Log10MeanGSH = log10(MeanGSH)) %>% 
-  mutate(Log10CFAR = log10(CaudalAspect_proportion_TL))
+  mutate(LogMeanGSH = log(MeanGSH)) %>% 
+  mutate(LogCFAR = log(CaudalAspect_proportion_TL))
 #update taxonomy to match
 GSH_df[(GSH_df$Binomial == 'Deania_quadrispinosum'), 'Binomial'] <- 'Deania_quadrispinosa'
 GSH_df[(GSH_df$Binomial == 'Ctenacis_fehlmani'), 'Binomial'] <- 'Ctenacis_fehlmanni' 
@@ -172,26 +172,26 @@ Habitat <- Habitat[,c(10,22,23,29,31,33,34)]
 GSH_df <- left_join(GSH_df, Habitat, by = c('Binomial' = 'Genus_species'))
 GSH_df$MaxLinearDimension <- as.numeric(GSH_df$MaxLinearDimension)
 GSH_df$DepthMax_m_text <- as.numeric(GSH_df$DepthMax_m_text)
-GSH_df$Log10DepthMax <- log10(GSH_df$DepthMax_m_text)
+GSH_df$LogDepthMax <- log(GSH_df$DepthMax_m_text)
 GSH_df$DepthMin_m_text <- as.numeric(GSH_df$DepthMin_m_text)
-GSH_df$Log10DepthMin <- log10(GSH_df$DepthMin_m_text)
-GSH_df$Log10DepthMax[which(GSH_df$Log10DepthMax == -Inf)] = -1
-GSH_df$Log10DepthMin[which(GSH_df$Log10DepthMin == -Inf)] = -1
+GSH_df$LogDepthMin <- log(GSH_df$DepthMin_m_text)
+GSH_df$LogDepthMax[which(GSH_df$LogDepthMax == -Inf)] = 0
+GSH_df$LogDepthMin[which(GSH_df$LogDepthMin == -Inf)] = 0
 
 #Log the maximum size column
 GSH_df <- GSH_df %>% 
   rowwise() %>% 
-  mutate(Log10MaxSize = log10(MaxLinearDimension),
+  mutate(LogMaxSize = log(MaxLinearDimension),
          MedianDepth_m = mean(c(DepthMin_m_text, DepthMax_m_text)),
-         Log10DepthMedian = mean(c(Log10DepthMax, Log10DepthMin)))
+         LogDepthMedian = mean(c(LogDepthMax, LogDepthMin)))
 #center the Log10 Mean GSH column
-GSH_df$Log10MeanGSH_centered <- center_scale(GSH_df$Log10MeanGSH)
+GSH_df$LogMeanGSH_centered <- center_scale(GSH_df$LogMeanGSH)
 #force numeric
-GSH_df$Log10MeanGSH_centered <- as.numeric(GSH_df$Log10MeanGSH_centered)
+GSH_df$LogMeanGSH_centered <- as.numeric(GSH_df$LogMeanGSH_centered)
 #center scale depths
-GSH_df$Log10DepthMax_centered <- (GSH_df$Log10DepthMax - mean(GSH_df$Log10DepthMax, na.rm = TRUE)) / sd(GSH_df$Log10DepthMax, na.rm = TRUE)
-GSH_df$Log10DepthMin_centered <- (GSH_df$Log10DepthMin - mean(GSH_df$Log10DepthMin, na.rm = TRUE)) / sd(GSH_df$Log10DepthMin, na.rm = TRUE)
-GSH_df$Log10DepthMedian_centered <- (GSH_df$Log10DepthMedian - mean(GSH_df$Log10DepthMedian, na.rm = TRUE)) / sd(GSH_df$Log10DepthMedian, na.rm = TRUE)
+GSH_df$LogDepthMax_centered <- (GSH_df$LogDepthMax - mean(GSH_df$LogDepthMax, na.rm = TRUE)) / sd(GSH_df$Log10DepthMax, na.rm = TRUE)
+GSH_df$LogDepthMin_centered <- (GSH_df$LogDepthMin - mean(GSH_df$LogDepthMin, na.rm = TRUE)) / sd(GSH_df$Log10DepthMin, na.rm = TRUE)
+GSH_df$LogDepthMedian_centered <- (GSH_df$LogDepthMedian - mean(GSH_df$LogDepthMedian, na.rm = TRUE)) / sd(GSH_df$LogDepthMedian, na.rm = TRUE)
 
 ###Phylo Data####
 #read in the 10000 trees
@@ -199,54 +199,102 @@ FullTree <- read.nexus(here('./Data/Input/10.cal.tree.nex'))
 #se the seed for reproduciblility
 set.seed(11)
 #sample out a tree
-SampleTree <- sample(FullTree, 1)
-SampleTree <- SampleTree$UNTITLED
+SampleFullTree <- sample(FullTree, 1)
+SampleFullTree <- SampleFullTree$UNTITLED
 #check if tips are binary
-is.binary(SampleTree)
+is.binary(SampleFullTree)
 #check where the tree and dataset differ
-namedrops <- name.check(SampleTree, GSH_df, GSH_df$Binomial)
+namedrops <- name.check(SampleFullTree, GSH_df, GSH_df$Binomial)
 #drop the tips that are in the tree and not in the data (all the rays)
-SampleTree <- drop.tip(SampleTree, namedrops$tree_not_data)
+SampleFullTree <- drop.tip(SampleFullTree, namedrops$tree_not_data)
 #drop the species in the dataset that are not in the tree
-GSH_df_pgls <- subset(GSH_df, GSH_df$Binomial %nin% namedrops$data_not_tree) 
+GSH_df_full <- subset(GSH_df, GSH_df$Binomial %nin% namedrops$data_not_tree) 
 
 #center the Log10 Max Size column
-GSH_df_pgls$Log10MaxSize_centered <- center_scale(GSH_df_pgls$Log10MaxSize)
+GSH_df_full$LogMaxSize_centered <- center_scale(GSH_df_full$LogMaxSize)
 #force numeric
-GSH_df_pgls$Log10MaxSize_centered <- as.numeric(GSH_df_pgls$Log10MaxSize_centered)
+GSH_df_full$LogMaxSize_centered <- as.numeric(GSH_df_full$LogMaxSize_centered)
 
-#species area
-GSH_df_pgls$area_sqkm <- as.numeric(GSH_df_pgls$area_sqkm)
-GSH_df_pgls$Log10Area <- log10(GSH_df_pgls$area_sqkm)
-GSH_df_pgls$Log10Area_centered <- (GSH_df_pgls$Log10Area - mean(GSH_df_pgls$Log10Area, na.rm = TRUE)) / sd(GSH_df_pgls$Log10Area, na.rm = TRUE)
 
 #center the Log10 CFAR column
-GSH_df_pgls$Log10CFAR_centered <- center_scale(GSH_df_pgls$Log10CFAR)
+GSH_df_full$LogCFAR_centered <- center_scale(GSH_df_full$LogCFAR)
 #force numeric
-GSH_df_pgls$Log10CFAR_centered <- as.numeric(GSH_df_pgls$Log10CFAR_centered)
+GSH_df_full$LogCFAR_centered <- as.numeric(GSH_df_full$LogCFAR_centered)
 
 #change habitats to factor
-GSH_df_pgls$PrimaryHabitat <- as.factor(GSH_df_pgls$PrimaryHabitat)
+GSH_df_full$PrimaryHabitat <- as.factor(GSH_df_full$PrimaryHabitat)
 #add contrast structure
-contrasts(GSH_df_pgls$PrimaryHabitat) = contr.treatment(3)
+contrasts(GSH_df_full$PrimaryHabitat) = contr.treatment(3)
 
 #order dataframe to match tree tip labels
-target <- SampleTree$tip.label
+target <- SampleFullTree$tip.label
 
-GSH_df_pgls <- GSH_df_pgls %>% 
-  arrange(factor(GSH_df_pgls$Binomial, levels = target))
+GSH_df_full <- GSH_df_full %>% 
+  arrange(factor(GSH_df_full$Binomial, levels = target))
 
-GSH_df_pgls <- GSH_df_pgls %>% drop_na(Log10DepthMedian_centered, area_sqkm)
 
 #covariance matrix (STAN)
-A <- ape::vcv.phylo(SampleTree, corr = TRUE)
+A <- ape::vcv.phylo(SampleFullTree, corr = TRUE)
 #(BRMS)
-B <- ape::vcv(SampleTree, corr = TRUE)
+B <- ape::vcv(SampleFullTree, corr = TRUE)
 
 
 ```
 
 ## Plot the Tree
 ```{r}
-plot(SampleTree, type = 'fan', show.tip=F, edge.color = rainbow(1200))
+plot(SampleFullTree, type = 'fan', show.tip=F, edge.color = rainbow(1200))
+```
+
+```{r}
+###Phylo Data####
+#read in the 10000 trees
+SeqTree <- read.nexus(here('./Data/Input/output.nex'))
+#se the seed for reproduciblility
+set.seed(11)
+#sample out a tree
+SampleSeqTree <- sample(SeqTree, 1)
+is.binary(SampleSeqTree)
+SampleSeqTree <- SampleSeqTree$tree_0063
+#check where the tree and dataset differ
+namedrops <- name.check(SampleSeqTree, GSH_df, GSH_df$Binomial)
+#drop the tips that are in the tree and not in the data (all the rays)
+SampleSeqTree <- drop.tip(SampleSeqTree, namedrops$tree_not_data)
+#drop the species in the dataset that are not in the tree
+GSH_df_seq <- subset(GSH_df, GSH_df$Binomial %nin% namedrops$data_not_tree) 
+
+#center the Log10 Max Size column
+GSH_df_seq$LogMaxSize_centered <- center_scale(GSH_df_seq$LogMaxSize)
+#force numeric
+GSH_df_seq$LogMaxSize_centered <- as.numeric(GSH_df_seq$LogMaxSize_centered)
+
+
+#center the Log10 CFAR column
+GSH_df_seq$LogCFAR_centered <- center_scale(GSH_df_seq$LogCFAR)
+#force numeric
+GSH_df_seq$LogCFAR_centered <- as.numeric(GSH_df_seq$LogCFAR_centered)
+
+#change habitats to factor
+GSH_df_seq$PrimaryHabitat <- as.factor(GSH_df_seq$PrimaryHabitat)
+#add contrast structure
+contrasts(GSH_df_seq$PrimaryHabitat) = contr.treatment(3)
+
+#order dataframe to match tree tip labels
+target <- SampleSeqTree$tip.label
+
+GSH_df_seq <- GSH_df_seq %>% 
+  arrange(factor(GSH_df_seq$Binomial, levels = target))
+
+
+#covariance matrix (STAN)
+C <- ape::vcv.phylo(SampleSeqTree, corr = TRUE)
+#(BRMS)
+D <- ape::vcv(SampleSeqTree, corr = TRUE)
+
+
+```
+
+## Plot the Tree
+```{r}
+plot(SampleSeqTree, type = 'fan', show.tip=F, edge.color = rainbow(700))
 ```

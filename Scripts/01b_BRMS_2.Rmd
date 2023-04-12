@@ -1,7 +1,7 @@
 ---
-title: "01b_BRMS"
+title: "01b_BRMS_2"
 author: "Wade VanderWright"
-date: '2022-03-24'
+date: '2023-04-11'
 output: html_document
 ---
 
@@ -9,10 +9,11 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#01_b -- BRMS Models for Ch. 1
+#01_b -- BRMS Models for Ch. 1 (sequenced tree)
 ## VanderWright, WJ
-## May 27, 2022
-## Updated: November 1, 2022
+## April 11, 2023
+## Updated: NA
+
 
 ## Model 1 - GSH ~ CFAR
 
@@ -293,6 +294,5 @@ saveRDS(brms_2, here("Data", "Output", "brms_2.rds"))
 saveRDS(brms_3, here("Data", "Output", "brms_3.rds"))
 saveRDS(brms_4, here("Data", "Output", "brms_4.rds"))
 ```
-
 
 
