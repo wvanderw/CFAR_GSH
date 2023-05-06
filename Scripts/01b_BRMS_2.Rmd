@@ -155,7 +155,7 @@ brms_8 <- brm(LogMeanGSH_centered ~ LogCFAR_centered + LogMaxSize_centered + Log
                     data = GSH_df_seq,
                     family = gaussian(),
                     data2 = list(D = D),
-                    prior = brms_4_prior,
+                    prior = brms_8_prior,
                     chains = 4, cores = 4,
                     warmup = 1000, iter = 5000)
 
@@ -233,13 +233,14 @@ fit8_loo <- loo(brms_8)
 
 brms_loo_phylo_list <- list(fit5_loo, fit6_loo, fit7_loo, fit8_loo)
 brms_loo_phylo_seq <- loo_compare(brms_loo_phylo_list)
-loo_model_weights_2(brms_loo_phylo_list)
+loo_model_weights(brms_loo_phylo_list)
 
 LOO_Table_2 <- data.frame(round(brms_loo_phylo_seq, 2))
 
 write.csv(LOO_Table_2, file = here("./Data/Output/LOO_Table_2.csv"), row.names = T)
 
 brms_loo_phylo_seq
+
 ```
 
 ## Summary of models
@@ -271,7 +272,7 @@ Table_5
 ```{r}
 library(car)
 
-linear_mod <- lm(Log10MeanGSH_centered ~ Log10CFAR_centered + Log10MaxSize_centered + Log10DepthMedian_centered, data = GSH_df_seq)
+linear_mod <- lm(LogMeanGSH_centered ~ LogCFAR_centered + LogMaxSize_centered + LogDepthMedian_centered, data = GSH_df_seq)
 
 vif(linear_mod)
 ```
@@ -295,4 +296,16 @@ saveRDS(brms_7, here("Data", "Output", "brms_3.rds"))
 saveRDS(brms_8, here("Data", "Output", "brms_4.rds"))
 ```
 
+
+```{r}
+brms_Check <- brm(LogMeanGSH_centered ~ LogCFAR_centered + (1|gr(Binomial, cov = D)),
+                    data = GSH_df_seq,
+                    data2 = list(D = D),
+                    family = gaussian(),
+                    prior = brms_5_prior,
+                    sample_prior = "only"
+                    )
+
+pp_check(brms_Check)
+```
 

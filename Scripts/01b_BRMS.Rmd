@@ -163,8 +163,7 @@ summary(brms_4)
 
 ```{r}
 conditions <- data.frame(LogDepthMedian_centered = c(-1, 0, 1))
-plot(conditional_effects(brms_4, effects = "LogCFAR_centered",
-                         conditions = conditions,  spaghetti = FALSE, ndraws = 1000), points = TRUE)
+plot(conditional_effects(brms_4, effects = "LogCFAR_centered:LogDepthMedian_centered",  spaghetti = FALSE, ndraws = 1000), points = TRUE, probs = 0)
 ```
 
 ```{r}
