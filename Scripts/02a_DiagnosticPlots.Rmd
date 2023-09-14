@@ -396,22 +396,22 @@ size.labels <- c(-2, 0, 2, 4)
 depth.labels <- rep(NA,4)
 
 size.func <- function(x){
-  (sd(GSH_df_full$LogMaxSize, na.rm = T)*x) + mean(GSH_df_full$LogMaxSize, na.rm = T)
+  exp((sd(GSH_df_full$LogMaxSize, na.rm = T)*x) + mean(GSH_df_full$LogMaxSize, na.rm = T))
 }
 
 
 size.labels <- size.func(size.labels)
 
 for(i in -2:1){
-  depth.labels[i +3] <- (sd(GSH_df_full$LogDepthMedian, na.rm = T)*i) + mean(GSH_df_full$LogDepthMedian, na.rm = T)
+  depth.labels[i +3] <- exp((sd(GSH_df_full$LogDepthMedian, na.rm = T)*i) + mean(GSH_df_full$LogDepthMedian, na.rm = T))
 }
 
-depth.labels <- round(depth.labels, 2)
-size.labels <- round(size.labels,2)
+depth.labels <- round(depth.labels)
+size.labels <- round(size.labels)
 
 plot_11 <- ggplot(aes(x = LogCFAR_centered, y = LogMeanGSH_centered,  colour = LogDepthMedian_centered), data = GSH_df_full) + geom_point(alpha = 0.5, aes(size = LogMaxSize_centered)) +
-  scale_size(guide = "legend", breaks = c(-2, 0, 2, 4), labels = size.labels, name = "Log Max Size") +
-  scale_color_gradient(low = '#D1D5FF', high = '#070469', name = "Log Median Depth", breaks = c(-2, -1, 0, 1), labels = depth.labels)+
+  scale_size(guide = "legend", breaks = c(-2, 0, 2, 4), labels = size.labels, name = "Maximum Size (cm)") +
+  scale_color_gradient(low = '#D1D5FF', high = '#070469', name = "Median Depth (m)", breaks = c(-2, -1, 0, 1), labels = depth.labels)+
   theme_bw()+
        ylab("Log10 GSH (proportion of TL)")+
        xlab("Log10 CFAR") +
@@ -433,22 +433,115 @@ plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_4)[1,1] + dp.line.int, s
 
 x.ticks <- rep(NA, 5)
 for(i in -2:2){
-x.ticks[i+3] <- (sd(GSH_df_full$LogCFAR)*i) + mean(GSH_df_full$LogCFAR)
+x.ticks[i+3] <- exp((sd(GSH_df_full$LogCFAR)*i) + mean(GSH_df_full$LogCFAR))
 }
 
 y.ticks <- rep(NA, 5)
 for(i in -2:2){
-  y.ticks[i+3] <- (sd(GSH_df_full$LogMeanGSH)*i) + mean(GSH_df_full$LogMeanGSH)
+  y.ticks[i+3] <- (exp((sd(GSH_df_full$LogMeanGSH)*i) + mean(GSH_df_full$LogMeanGSH)) * 100)
 }
 
 x.ticks <- round(x.ticks,2)
 y.ticks <- round(y.ticks,2)
 
 plot_11 <- plot_11 +
-  scale_x_continuous(name = "Log CFAR", breaks = c(-2,-1,0,1,2), labels = as.character(x.ticks)) +
-  scale_y_continuous(name = "Log Mean GSH (proportion of TL)", breaks = c(-2,-1,0,1,2), labels = y.ticks)
+  scale_x_continuous(name = "Activity level (CFAR)", breaks = c(-2,-1,0,1,2), labels = as.character(x.ticks)) +
+  scale_y_continuous(name = "Mean GSH (percent TL)", breaks = c(-2,-1,0,1,2), labels = y.ticks)
 
-plot_11
+plot_11 <- plot_11 + annotation_logticks()
+
+img1 <- readPNG(here("Data","Input","Mako-281 (1).png"))
+g1 <- rasterGrob(img1, interpolate = TRUE)
+
+img2 <- readPNG(here("Data","Input","Apristurus-74.png"))
+g2 <- rasterGrob(img2, interpolate = TRUE)
+
+plot_11 <- plot_11 + geom_segment(x = 2.64, xend = (2.64-0.25),
+                       y = 2.8 , yend = (2.8-0.25), size = 1.5, colour = 'grey10')
+
+plot_11 <- plot_11 + geom_segment(x = -1.63, xend = (-1.63-0.5),
+                       y = -0.88 , yend = (-2), size = 1.5, colour = 'grey10')
+
+plot_11 <- plot_11 + annotation_custom(g1, xmin = 1.5, xmax = 2.64 , ymin = 1.5, ymax = 2.55) + annotation_custom(g2, xmin =-2.5 , xmax = (-1.5) , ymin = -2.94 , ymax = -1.55 )
+
+ggsave(here('./Data/Output/Model4_plot.png'), plot_11, height = 15, width = 22, units = 'cm')
+
+```
+
+
+
+
+###THIS ONE pt. 2
+```{r}
+
+
+p1 <- conditional_effects(brms_4, effects = "LogCFAR_centered:LogDepthMedian_centered",
+                          int_conditions = list(Log10DepthMedian_centered = -1:1), prob = 0.87) 
+
+
+sh.line.int <- p1[[1]]$estimate__[151] - p1[[1]]$estimate__[152] 
+sh.line.int
+  
+dp.line.int <- p1[[1]]$estimate__[153] - p1[[1]]$estimate__[152] 
+dp.line.int
+
+size.labels <- c(-2, 0, 2, 4)
+depth.labels <- rep(NA,4)
+
+size.func <- function(x){
+  exp((sd(GSH_df_full$LogMaxSize, na.rm = T)*x) + mean(GSH_df_full$LogMaxSize, na.rm = T))
+}
+
+
+size.labels <- size.func(size.labels)
+
+for(i in -2:1){
+  depth.labels[i +3] <- exp((sd(GSH_df_full$LogDepthMedian, na.rm = T)*i) + mean(GSH_df_full$LogDepthMedian, na.rm = T))
+}
+
+depth.labels <- round(depth.labels, 2)
+size.labels <- round(size.labels,2)
+
+plot_test <- ggplot(aes(x = LogCFAR_centered, y = LogMeanGSH_centered,  colour = LogDepthMedian_centered), data = GSH_df_full) + geom_point(alpha = 0.5, aes(size = LogMaxSize_centered)) +
+  scale_size(guide = "legend", breaks = c(-2, 0, 2, 4), labels = size.labels, name = "Max Size (cm)") +
+  scale_color_gradient(low = '#D1D5FF', high = '#070469', name = "Median Depth (m)", breaks = c(-2, -1, 0, 1), labels = depth.labels)+
+  theme_bw()+
+       ylab("Log10 GSH (proportion of TL)")+
+       xlab("Log10 CFAR") +
+  guides(color = guide_colourbar(reverse = TRUE))
+  
+
+#coastal
+  for (i in 1:500) {
+ plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_4, summary = F)[i,1], slope = fixef(brms_4, summary = F)[i,2], color = adjustcolor("#1b9e77", alpha = 0.05), lty = 1) 
+} 
+
+
+
+#coastal
+plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_4)[1,1], slope = fixef(brms_4)[2,1], color = '#3343FF', size = 1.5)
+plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_4)[1,1] + sh.line.int, slope = fixef(brms_4)[2,1], color = '#7570b3', size = 1.5)
+plot_11 <- plot_11 + geom_abline(intercept = fixef(brms_4)[1,1] + dp.line.int, slope = fixef(brms_4)[2,1], color = '#070469', size = 1.5) 
+
+
+x.ticks <- rep(NA, 5)
+for(i in -2:2){
+x.ticks[i+3] <- exp((sd(GSH_df_full$LogCFAR)*i) + mean(GSH_df_full$LogCFAR))
+}
+
+y.ticks <- rep(NA, 5)
+for(i in -2:2){
+  y.ticks[i+3] <- (exp((sd(GSH_df_full$LogMeanGSH)*i) + mean(GSH_df_full$LogMeanGSH)) * 100)
+}
+
+x.ticks <- round(x.ticks,2)
+y.ticks <- round(y.ticks,2)
+
+plot_11 <- plot_11 +
+  scale_x_continuous(name = "Activity level (CFAR)", breaks = c(-2,-1,0,1,2), labels = as.character(x.ticks)) +
+  scale_y_continuous(name = "Mean GSH (percent TL)", breaks = c(-2,-1,0,1,2), labels = y.ticks)
+
+plot_11 <- plot_11 + annotation_logticks()
 
 ggsave(here('./Data/Output/Model4_plot.png'), plot_11, height = 20, width = 30, units = 'cm')
 
@@ -459,7 +552,7 @@ ggsave(here('./Data/Output/Model4_plot.png'), plot_11, height = 20, width = 30, 
 ```{r}
 p2 <- plot_11 + p2
 
-p2 <- plot(p1, points = F, plot = F)[[1]]  +
+p2 <- plot(p1, points = T, plot = F)[[1]]  +
   scale_colour_manual(values = c('#D1D5FF', "#7570b3", "#3343FF")) +
   scale_fill_manual(values = c('#D1D5FF', "#7570b3", "#3343FF")) +
   theme_bw() + theme(legend.position = 'none')
@@ -584,12 +677,13 @@ out <- estimate_density(brms_4_post, extend = T, select = 'b_Intercept')
 out_IC <- estimate_density(brms_4_post, extend = T, select = 'b_Intercept')
 
 I_C <- ggplot(out_IC, aes(x = x, y = y)) +
-  geom_segment(x = brms_4_CI$CI_low[1], xend = brms_4_CI$CI_high[1], y = 1.25, yend = 1.25, color = 'black', size = 1, alpha = 0.3)+
+  geom_segment(x = brms_4_CI$CI_low[1], xend = brms_4_CI$CI_high[1], y = 1.25, yend = 1.25, color = 'black', size = 0.5, alpha = 0.3)+
   geom_point(x = mean(brms_4_post$b_Intercept), y = 1.25, size = 2,  color = 'black') +
   geom_vline(xintercept = 0, lty = 2) +
   xlim(-1, 1.25) +
   ylim(0,2) +
-  annotate("text", x = 1.25, y = 1, label = "Intercept") +
+  annotate("text", x = 1.15, y = 1, label = "Intercept") +
+    annotate("text", x = -1, y = 1.5, label = "d)") +
   theme(legend.position = "none",
         panel.grid = element_blank(),
         axis.title = element_blank(),
@@ -605,12 +699,14 @@ I_C
 out_SG <- estimate_density(brms_4_post, extend = T, select = 'b_LogCFAR_centered')
 
 S_G <- ggplot(out_SG, aes(x = x, y = y)) +
-  geom_segment(x = brms_4_CI$CI_low[2], xend = brms_4_CI$CI_high[2], y = 1.25, yend = 1.25, color = 'black', size = 1, alpha = 0.3)+
+  geom_segment(x = brms_4_CI$CI_low[2], xend = brms_4_CI$CI_high[2], y = 1.25, yend = 1.25, color = 'black', size = 0.5, alpha = 0.3)+
   geom_point(x = mean(brms_4_post$b_LogCFAR_centered), y = 1.25,  color = 'black', size = 2) +
   geom_vline(xintercept = 0, lty = 2) +
   xlim(-1, 1.25) +
   ylim(0,2) +
-  annotate("text", x = 1.25, y = 1, label = "Activity") +
+  annotate("text", x = 1.15, y = 1, label = "Activity") +
+    annotate("text", x = -1, y = 1.5, label = "a)") +
+   annotate("text", x = 0.65, y = 1.25, label = "Ecological lifestyle model", size = 3) +
   theme(legend.position = "none",
         panel.grid = element_blank(),
         axis.title = element_blank(),
@@ -624,12 +720,13 @@ S_G
 out_SS <- estimate_density(brms_4_post, extend = T, select = 'b_LogMaxSize_centered')
 
 S_S <- ggplot(out_SS, aes(x = x, y = y)) +
-  geom_segment(x = brms_4_CI$CI_low[3], xend = brms_4_CI$CI_high[3], y = 1.25, yend = 1.25, color = 'black', size = 1, alpha = 0.3) +
+  geom_segment(x = brms_4_CI$CI_low[3], xend = brms_4_CI$CI_high[3], y = 1.25, yend = 1.25, color = 'black', size = 0.5, alpha = 0.3) +
   geom_point(x = mean(brms_4_post$b_LogMaxSize_centered), y = 1.25, color = 'black', size = 2) +
     geom_vline(xintercept = 0, lty = 2) +
   xlim(-1, 1.25) +
   ylim(0,2) +
-  annotate("text", x = 1.25, y = 1, label = "Max size") +
+  annotate("text", x = 1.15, y = 1, label = "Maximum size") +
+    annotate("text", x = -1, y = 1.5, label = "b)") +
   theme(legend.position = "none",
         panel.grid = element_blank(),
         axis.title = element_blank(),
@@ -641,7 +738,7 @@ S_S <- ggplot(out_SS, aes(x = x, y = y)) +
 S_S
 
 
-LEG.df <- data.frame(x = c(rep(-1,4)), y = c(0.625, 0.875, 1.125, 1.375), size = 2, shape = c(23, 15, 17, 16), color = c('grey60','grey60','grey60', 'black'))
+LEG.df <- data.frame(x = c(rep(-0.75,4)), y = c(0.425, 0.675, 0.925, 1.175), size = 2, shape = c(23, 15, 17, 16), color = c('grey60','grey60','grey60', 'black'))
 
 
 LEG <- ggplot(LEG.df, aes(x = x, y = y)) +
@@ -658,11 +755,15 @@ LEG <- ggplot(LEG.df, aes(x = x, y = y)) +
 
 
 LEG <- LEG +
-  annotate("text", x = -0.75, y = 1.75, label = "Model", size = 4) +
-  annotate("text", x = -0.75, y = 1.375, label = "Ecological lifestyle", size = 3) +
-  annotate("text", x = -0.75, y = 1.125, label = "Activity", size = 3) +
-  annotate("text", x = -0.75, y = 0.875, label = "Size", size = 3) +
-  annotate("text", x = -0.75, y = 0.625, label = "Depth", size = 3)
+  annotate("text", x = -0.5, y = 1.5, label = "Model", size = 4) +
+  annotate("text", x = -0.5, y = 1.175, label = "Ecological lifestyle", size = 3) +
+  annotate("text", x = -0.5, y = 0.925, label = "Activity", size = 3) +
+  annotate("text", x = -0.5, y = 0.675, label = "Max Size", size = 3) +
+  annotate("text", x = -0.5, y = 0.425, label = "Depth", size = 3) +
+  geom_segment(x = -0.85, xend = -0.25, y = 1.65, yend = 1.65) +
+  geom_segment(x = -0.85, xend = -0.25, y = 0.25, yend = 0.25) +
+  geom_segment(x = -0.85, xend = -0.85, y = 0.25, yend = 1.65) +
+  geom_segment(x = -0.25, xend = -0.25, y = 1.65, yend = 0.25)
 
 LEG
 
@@ -670,12 +771,13 @@ LEG
 out_SD <- estimate_density(brms_4_post, extend = T, select = 'b_LogDepthMedian_centered')
 
 S_D <- ggplot(out_SD, aes(x = x, y = y)) +
- geom_segment(x = brms_4_CI$CI_low[4], xend = brms_4_CI$CI_high[4], y = 1.25, yend = 1.25, color = 'black', size = 1, alpha = 0.3) +
+ geom_segment(x = brms_4_CI$CI_low[4], xend = brms_4_CI$CI_high[4], y = 1.25, yend = 1.25, color = 'black', size = 0.5, alpha = 0.3) +
   geom_point(x = mean(brms_4_post$b_LogDepthMedian_centered), y = 1.25, color = 'black', size = 2) +
     geom_vline(xintercept = 0, lty = 2) +
   xlim(-1, 1.25) +
   ylim(0,2) +
-  annotate("text", x = 1.25, y = 1, label = "Depth") +
+  annotate("text", x = 1.15, y = 1, label = "Median Depth") +
+  annotate("text", x = -1, y = 1.75, label = "c)") +
  theme(legend.position = "none",
         panel.grid = element_blank(),
         axis.title = element_blank(),
@@ -692,12 +794,13 @@ out_sigma <- estimate_density(brms_4_post, extend = T, select = 'sigma')
 
 
 SIG <- ggplot(out_sigma, aes(x = x, y = y)) +
-  geom_segment(x = brms_4_CI$CI_low[5], xend = brms_4_CI$CI_high[5], y = 1.25, yend = 1.25, color = 'black', size = 1, alpha = 0.3) +
+  geom_segment(x = brms_4_CI$CI_low[5], xend = brms_4_CI$CI_high[5], y = 1.25, yend = 1.25, color = 'black', size = 0.5, alpha = 0.3) +
   geom_point(x = mean(brms_4_post$sigma), y = 1.25, color = 'black', size = 2) +
     geom_vline(xintercept = 0, lty = 2) +
   scale_x_continuous(name = "Coefficient estimates", limits = c(-1, 1.25), breaks = c(-1, 0, 1)) +
   ylim(0,2) +
-  annotate("text", x = 1.25, y = 1, label = "Sigma") +
+  annotate("text", x = 1.15, y = 1, label = "Sigma") +
+  annotate("text", x = -1, y = 1.5, label = "e)") +
   theme(legend.position = "none",
         panel.grid = element_blank(),
         axis.title.y = element_blank(),
@@ -737,9 +840,8 @@ brms_1_CI$CI_low[1]
 out_IC1 <- estimate_density(brms_1_post, extend = T, select = 'b_Intercept')
 
 I_C1 <- ggplot(out_IC1, aes(x = x, y = y)) +
-  geom_segment(x = brms_1_CI$CI_low[1], xend = brms_1_CI$CI_high[1], y = 1, yend = 1, color = 'grey60', size = 1, alpha = 0.5)+
+  geom_segment(x = brms_1_CI$CI_low[1], xend = brms_1_CI$CI_high[1], y = 1, yend = 1, color = 'grey60', size = 0.5, alpha = 0.5)+
   geom_point(x = mean(brms_1_post$b_Intercept), y = 1, color = 'grey60', size = 2, shape = 17, alpha = 0.1) +
-  geom_vline(xintercept = 0, lty = 2) +
   xlim(-1, 1.25) +
   ylim(0,2) +
   theme(legend.position = "none",
@@ -757,9 +859,10 @@ I_C1
 out_SG1 <- estimate_density(brms_1_post, extend = T, select = 'b_LogCFAR_centered')
 
 S_G1 <- ggplot(out_SG1, aes(x = x, y = y)) +
-  geom_segment(x = brms_1_CI$CI_low[2], xend = brms_1_CI$CI_high[2], y = 1, yend = 1, color = 'grey60', size = 1, alpha = 0.3)+
+  geom_segment(x = brms_1_CI$CI_low[2], xend = brms_1_CI$CI_high[2], y = 1, yend = 1, color = 'grey60', size = 0.5, alpha = 0.3)+
   geom_point(x = mean(brms_1_post$b_LogCFAR_centered), y = 1, color = 'grey60', size = 2, shape = 17) +
-  geom_vline(xintercept = 0, lty = 2) +
+  annotate("text", x = 0.65, y = 1, label = "Activity only model", size = 3, color = 'grey60') +
+
   xlim(-1, 1.25) +
   ylim(0,2) +
   theme(legend.position = "none",
@@ -777,17 +880,16 @@ out_sigma1 <- estimate_density(brms_1_post, extend = T, select = 'sigma')
 
 
 SIG1 <- ggplot(out_sigma1, aes(x = x, y = y)) +
-  geom_segment(x = brms_1_CI$CI_low[3], xend = brms_1_CI$CI_high[3], y = 1, yend = 1, color = 'grey60', size = 1, alpha = 0.3)+
+  geom_segment(x = brms_1_CI$CI_low[3], xend = brms_1_CI$CI_high[3], y = 1, yend = 1, color = 'grey60', size = 0.5, alpha = 0.3)+
   geom_point(x = mean(brms_1_post$sigma), y = 1, color = 'grey60', size = 2, shape = 17) +
-    geom_vline(xintercept = 0, lty = 2) +
   scale_x_continuous(name = "Coefficient estimates", limits = c(-1, 1.25), breaks = c(-1, 0, 1)) +
   ylim(0,2) +
   theme(legend.position = "none",
         panel.grid = element_blank(),
-        axis.title.y = element_blank(),
-        axis.line.x = element_line(size = 1, color = 'black', linetype = 'solid'),
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank(),
+        axis.title = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
         panel.background = element_blank(),
         plot.background = element_rect(fill = "transparent", color = NA))
 
@@ -821,9 +923,8 @@ out <- estimate_density(brms_2_post, extend = T, select = 'b_Intercept')
 out_IC2 <- estimate_density(brms_2_post, extend = T, select = 'b_Intercept')
 
 I_C2 <- ggplot(out_IC2, aes(x = x, y = y)) +
-  geom_segment(x = brms_2_CI$CI_low[1], xend = brms_2_CI$CI_high[1], y = 0.8, yend = 0.8, color = 'grey60', size = 1, alpha = 0.3)+
+  geom_segment(x = brms_2_CI$CI_low[1], xend = brms_2_CI$CI_high[1], y = 0.8, yend = 0.8, color = 'grey60', size = 0.5, alpha = 0.3)+
   geom_point(x = mean(brms_2_post$b_Intercept), y = 0.8, color = 'grey60', size = 2, shape = 15) +
-  geom_vline(xintercept = 0, lty = 2) +
   xlim(-1, 1.25) +
   ylim(0,2) +
   theme(legend.position = "none",
@@ -842,9 +943,9 @@ I_C2
 out_SS2 <- estimate_density(brms_2_post, extend = T, select = 'b_LogMaxSize_centered')
 
 S_S2 <- ggplot(out_SS2, aes(x = x, y = y)) +
-  geom_segment(x = brms_2_CI$CI_low[2], xend = brms_2_CI$CI_high[2], y = 1, yend = 1, color = 'grey60', size = 1, alpha = 0.3)+
+  geom_segment(x = brms_2_CI$CI_low[2], xend = brms_2_CI$CI_high[2], y = 1, yend = 1, color = 'grey60', size = 0.5, alpha = 0.3)+
   geom_point(x = mean(brms_2_post$b_LogMaxSize_centered), y = 1,  color = 'grey60', size = 2, shape = 15) +
-    geom_vline(xintercept = 0, lty = 2) +
+  annotate("text", x = 0.65, y = 1, label = "Maximum size only model", size = 3, color = 'grey60') +
   xlim(-1, 1.25) +
   ylim(0,2) +
   theme(legend.position = "none",
@@ -864,17 +965,16 @@ out_sigma2 <- estimate_density(brms_2_post, extend = T, select = 'sigma')
 
 
 SIG2 <- ggplot(out_sigma2, aes(x = x, y = y)) +
-  geom_segment(x = brms_2_CI$CI_low[3], xend = brms_2_CI$CI_high[3], y = 0.8, yend = 0.8, color = 'grey60', size = 1, alpha = 0.3)+
+  geom_segment(x = brms_2_CI$CI_low[3], xend = brms_2_CI$CI_high[3], y = 0.8, yend = 0.8, color = 'grey60', size = 0.5, alpha = 0.3)+
   geom_point(x = mean(brms_2_post$sigma), y = 0.8, color = 'grey60', size = 2, shape = 15) +
-    geom_vline(xintercept = 0, lty = 2) +
   scale_x_continuous(name = "Coefficient estimates", limits = c(-1, 1.25), breaks = c(-1, 0, 1)) +
   ylim(0,2) +
   theme(legend.position = "none",
         panel.grid = element_blank(),
-        axis.title.y = element_blank(),
-        axis.line.x = element_line(size = 1, color = 'black', linetype = 'solid'),
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank(),
+        axis.title = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
         panel.background = element_blank(),
         plot.background = element_rect(fill = "transparent", color = NA))
 
@@ -909,9 +1009,8 @@ out <- estimate_density(brms_3_post, extend = T, select = 'b_Intercept')
 out_IC3 <- estimate_density(brms_3_post, extend = T, select = 'b_Intercept')
 
 I_C3 <- ggplot(out_IC3, aes(x = x, y = y)) +
-  geom_segment(x = brms_3_CI$CI_low[1], xend = brms_3_CI$CI_high[1], y = 0.6, yend = 0.6, color = 'grey60', size = 1, alpha = 0.3)+
+  geom_segment(x = brms_3_CI$CI_low[1], xend = brms_3_CI$CI_high[1], y = 0.6, yend = 0.6, color = 'grey60', size = 0.5, alpha = 0.3)+
   geom_point(x = mean(brms_3_post$b_Intercept), y = 0.6, color = 'grey60', size = 2, shape = 23, fill = 'grey60') +
-  geom_vline(xintercept = 0, lty = 2) +
   xlim(-1, 1.25) +
   ylim(0,2) +
   theme(legend.position = "none",
@@ -930,9 +1029,9 @@ I_C3
 out_SD3 <- estimate_density(brms_3_post, extend = T, select = 'b_LogDepthMedian_centered')
 
 S_D3 <- ggplot(out_SD3, aes(x = x, y = y)) +
-  geom_segment(x = brms_3_CI$CI_low[2], xend = brms_3_CI$CI_high[2], y = 1, yend = 1, color = 'grey60', size = 1, alpha = 0.3)+
+  geom_segment(x = brms_3_CI$CI_low[2], xend = brms_3_CI$CI_high[2], y = 1, yend = 1, color = 'grey60', size = 0.5, alpha = 0.3)+
   geom_point(x = mean(brms_3_post$b_LogDepthMedian_centered), y = 1, color = 'grey60', size = 2, shape = 23, fill = 'grey60') +
-    geom_vline(xintercept = 0, lty = 2) +
+  annotate("text", x = -0.55, y = 1, label = "Median depth only model", size = 3, color = 'grey60') +
   xlim(-1, 1.25) +
   ylim(0,2) +
   theme(legend.position = "none",
@@ -952,17 +1051,17 @@ out_sigma3 <- estimate_density(brms_3_post, extend = T, select = 'sigma')
 
 
 SIG3 <- ggplot(out_sigma3, aes(x = x, y = y)) +
-  geom_segment(x = brms_3_CI$CI_low[3], y = 0.6, xend = brms_3_CI$CI_high[3], yend = 0.6, color = 'grey60', size = 1, alpha = 0.3)+
+  geom_segment(x = brms_3_CI$CI_low[3], y = 0.6, xend = brms_3_CI$CI_high[3], yend = 0.6, color = 'grey60', size = 0.5, alpha = 0.3)+
   geom_point(x = mean(brms_3_post$sigma), y = 0.6, color = 'grey60', size = 2, shape = 23, fill = 'grey60') +
-    geom_vline(xintercept = 0, lty = 2) +
   scale_x_continuous(name = "Coefficient estimates", limits = c(-1, 1.25), breaks = c(-1, 0, 1)) +
   ylim(0,2) +
   theme(legend.position = "none",
         panel.grid = element_blank(),
-        axis.title.y = element_blank(),
-        axis.line.x = element_line(size = 1, color = 'black', linetype = 'solid'),
+        axis.title = element_blank(),
+        axis.line.x = element_blank(),
         axis.ticks.y = element_blank(),
-        axis.text.y = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks.x = element_blank(),
         panel.background = element_blank(),
         plot.background = element_rect(fill = "transparent", color = NA))
 
@@ -976,30 +1075,29 @@ SIG3
 
 
 
-
+### layout
 
 
 ```{r}
 
 
-layout <- c(area(t=1,b=2,r=1,l=1), #brms 4 Int
-            area(t=1,b=2.1,r=1,l=1), #brms 1 Int
-            area(t=1,b=2.2,r=1,l=1), #brms 2 Int
-            area(t=1,b=2.3,r=1,l=1), #brms 3 Int
-            area(t=2,b=3,r=1,l=1), #brms 4 CFAR
-            area(t=2, b=3.1, r=1,l=1), #brms 1 CFAR
-            area(t=3,b=4,r=1,l=1), #brms 4 size
-            area(t=3, b=4.1, r=1,l=1), #brms 2 size
-            area(t=4,b=5,r=1,l=1), #brms 4 depth
-            area(t = 4, b=5.1,r=1,l=1), #brms 3 depth
+layout <- c(area(t=1,b=2,r=1,l=1), #brms 4 CFAR
+            area(t=1, b=2.1, r=1,l=1), #brms 1 CFAR
+            area(t=2,b=3,r=1,l=1), #brms 4 size
+            area(t=2, b=3.1, r=1,l=1), #brms 2 size
+            area(t=3,b=4,r=1,l=1), #brms 4 depth
+            area(t=3, b=4.1,r=1,l=1), #brms 3 depth
+            area(t=4,b=5,r=1,l=1), #brms 4 Int
+            area(t=4,b=5.1,r=1,l=1), #brms 1 Int
+            area(t=4,b=5.2,r=1,l=1), #brms 2 Int
+            area(t=4,b=5.3,r=1,l=1), #brms 3 Int
             area(t=5,b=6,r=1,l=1), #brms 4 sigma
             area(t=5, b=6.1,r=1,l=1), #brms 1 sigma
             area(t=5, b=6.2,r=1,l=1), #brms 2 sigma
-            area(t=5, b=6.3,r=1,l=1), #brms 3 sigma
-            area(t=5, b=6.85,r=1,l=1) #LEGEND
+            area(t=5, b=6.3,r=1,l=1) #brms 3 sigma
             ) 
 
-panel_plot <- I_C + I_C1 + I_C2 + I_C3 +  S_G + S_G1 + S_S + S_S2 + S_D + S_D3 + SIG + SIG1 + SIG2 + SIG3 + LEG + plot_layout(design = layout)
+panel_plot <- S_G + S_G1 + S_S + S_S2 + S_D + S_D3 + I_C + I_C1 + I_C2 + I_C3 + SIG + SIG1 + SIG2 + SIG3 + plot_layout(design = layout)
 
 panel_plot2 <- plot_11b + panel_plot + plot_layout(widths = c(2,1)) + plot_annotation(tag_levels = 'a')
 
@@ -1007,7 +1105,7 @@ panel_plot2
 
 ggsave(here('./Data/Output/Fig1_Draft.png'), panel_plot2, height = 20, width = 35, units = 'cm')
 
-ggsave(here('./Data/Output/panel_plot_v2.png'), panel_plot, height = 10, width = 18, units = 'cm')
+ggsave(here('./Data/Output/panel_plot_v2.png'), panel_plot, height = 10, width = 20, units = 'cm')
 
 
 ```
@@ -1092,5 +1190,18 @@ Size.depth
 
 ```{r}
 ggsave(here('./Data/Output/Supp_size_depth.png'), Size.depth, device = 'png', height = 6, width = 8, units = 'in')
+```
+
+
+
+### Just messing around
+```{r}
+
+two_points <- GSH_df_full %>% 
+  filter(Binomial %in% c("Isurus_paucus","Apristurus_herklotsi"))
+
+two_points[1,c("LogCFAR_centered","LogMeanGSH_centered")]
+
+plot_11 <- ggplot(aes(x = LogCFAR_centered, y = LogMeanGSH_centered,  colour = LogDepthMedian_centered), data = two_points) + geom_point()
 ```
 

@@ -268,6 +268,69 @@ write.csv(Table_5, file = here("./Data/Output/Model_summaries_seq_230412.csv"))
 Table_5
 ```
 
+### Back transform intercepts and units of change
+#### Model 1 - CFAR
+```{r}
+#back transform intercept - 0.57
+round((exp((sd(GSH_df_seq$LogMeanGSH, na.rm = T)*0.57) + mean(GSH_df_seq$LogMeanGSH, na.rm = T)) * 100),2)
+
+
+round((exp((sd(GSH_df_seq$LogMeanGSH, na.rm = T)*0.02) + mean(GSH_df_seq$LogMeanGSH, na.rm = T)) * 100),2)
+round((exp((sd(GSH_df_seq$LogMeanGSH, na.rm = T)*1.13) + mean(GSH_df_seq$LogMeanGSH, na.rm = T)) * 100),2)
+
+```
+
+
+```{r}
+#size of 1SD
+round(sd(GSH_df_seq$LogCFAR, na.rm = T),2)
+```
+
+
+#### Model 2 - Size
+```{r}
+#back transform intercept - 0.37
+round((exp((sd(GSH_df_seq$LogMeanGSH, na.rm = T)*0.37) + mean(GSH_df_seq$LogMeanGSH, na.rm = T)) * 100),2)
+
+
+round((exp((sd(GSH_df_seq$LogMeanGSH, na.rm = T)*-0.15) + mean(GSH_df_seq$LogMeanGSH, na.rm = T)) * 100),2)
+round((exp((sd(GSH_df_seq$LogMeanGSH, na.rm = T)*0.9) + mean(GSH_df_seq$LogMeanGSH, na.rm = T)) * 100),2)
+
+
+```
+
+```{r}
+#size of 1SD
+round(sd(GSH_df_seq$LogMaxSize, na.rm = T),2)
+```
+
+#### Model 3 - Depth
+```{r}
+#back transform intercept - 0.37
+round((exp((sd(GSH_df_seq$LogMeanGSH, na.rm = T)*0.42) + mean(GSH_df_seq$LogMeanGSH, na.rm = T)) * 100),2)
+
+
+round((exp((sd(GSH_df_seq$LogMeanGSH, na.rm = T)*-0.22) + mean(GSH_df_seq$LogMeanGSH, na.rm = T)) * 100),2)
+round((exp((sd(GSH_df_seq$LogMeanGSH, na.rm = T)*1.04) + mean(GSH_df_seq$LogMeanGSH, na.rm = T)) * 100),2)
+```
+
+```{r}
+#size of 1SD
+round(sd(GSH_df_seq$LogDepthMedian, na.rm = T),2)
+```
+
+#### Model 4 - Ecolife
+```{r}
+#back transform intercept - 0.
+round((exp((sd(GSH_df_seq$LogMeanGSH, na.rm = T)*0.41) + mean(GSH_df_seq$LogMeanGSH, na.rm = T)) * 100),2)
+
+
+round((exp((sd(GSH_df_seq$LogMeanGSH, na.rm = T)*-0.07) + mean(GSH_df_seq$LogMeanGSH, na.rm = T)) * 100),2)
+round((exp((sd(GSH_df_seq$LogMeanGSH, na.rm = T)*0.9) + mean(GSH_df_seq$LogMeanGSH, na.rm = T)) * 100),2)
+```
+
+
+
 ### VIF check
 ```{r}
 library(car)
@@ -290,10 +353,10 @@ cor(data)
 save.image(here('./Data/Output/CurrentDataState.RData'))
 
 
-saveRDS(brms_5, here("Data", "Output", "brms_1.rds"))
-saveRDS(brms_6, here("Data", "Output", "brms_2.rds"))
-saveRDS(brms_7, here("Data", "Output", "brms_3.rds"))
-saveRDS(brms_8, here("Data", "Output", "brms_4.rds"))
+saveRDS(brms_5, here("Data", "Output", "brms_5.rds"))
+saveRDS(brms_6, here("Data", "Output", "brms_6.rds"))
+saveRDS(brms_7, here("Data", "Output", "brms_7.rds"))
+saveRDS(brms_8, here("Data", "Output", "brms_8.rds"))
 ```
 
 

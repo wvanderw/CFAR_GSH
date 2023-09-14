@@ -265,6 +265,98 @@ write.csv(Table_5, file = here("./Data/Output/Model_summaries_230302.csv"))
 Table_5
 ```
 
+### Back transform intercepts and units of change
+#### Model 1 - CFAR
+```{r}
+#back transform intercept - 0.44
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.44) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) *100),2)
+
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.44) + mean(GSH_df_full$LogMeanGSH, na.rm = T) + (sd(GSH_df_full$LogMeanGSH, na.rm = T))) *100),2)
+
+
+
+#when x is 0
+round(mean(GSH_df_full$LogCFAR, na.rm = T),2)
+exp(mean(GSH_df_full$LogCFAR, na.rm = T) + sd(GSH_df_full$LogCFAR, na.rm = T)) - exp(mean(GSH_df_full$LogCFAR, na.rm = TRUE))
+
+#BCI - -0.1 , 0.98
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.37) + mean(GSH_df_full$LogMeanGSH, na.rm = T))*100),2)
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.98) + mean(GSH_df_full$LogMeanGSH, na.rm = T))*100),2)
+
+#error - 0.27
+round((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.27) + mean(GSH_df_full$LogMeanGSH, na.rm = T),2)
+
+
+```
+```{r}
+#size of 1SD
+round(sd(GSH_df_full$LogCFAR, na.rm = T),2)
+```
+
+
+#### Model 2 - Size
+```{r}
+#back transform intercept - 0.29
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.29) + mean(GSH_df_full$LogMeanGSH, na.rm = T))*100),2)
+
+#when x is 0
+round(mean(GSH_df_full$LogMaxSize, na.rm = T),2)
+round(exp(mean(GSH_df_full$LogMaxSize, na.rm = T)),2)
+
+#BCI - -0.22 , 0.79
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*-0.22) + mean(GSH_df_full$LogMeanGSH, na.rm = T))*100),2)
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.79) + mean(GSH_df_full$LogMeanGSH, na.rm = T))*100),2)
+
+#error - 0.27
+round((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.27) + mean(GSH_df_full$LogMeanGSH, na.rm = T),2)
+```
+
+
+
+#### Model 3 - Depth
+```{r}
+#size of 1SD
+#back transform intercept - 0.38
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.38) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
+
+#when x is 0
+round(mean(GSH_df_full$LogDepthMedian, na.rm = T),2)
+round(exp(mean(GSH_df_full$LogDepthMedian, na.rm = T)),2)
+
+#BCI - -0.21 , 0.97
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*-0.21) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.97) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
+
+#error - 0.xx ??
+round((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.27) + mean(GSH_df_full$LogMeanGSH, na.rm = T),2)
+```
+
+```{r}
+#size of 1SD
+round(sd(GSH_df_full$LogDepthMedian, na.rm = T),2)
+```
+
+#### Model 4 - Ecolife
+```{r}
+#size of 1SD
+#back transform intercept - 0.29
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.29) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
+
+#when x is 0
+round(mean(GSH_df_full$LogCFAR, na.rm = T),2)
+round(exp(mean(GSH_df_full$LogCFAR, na.rm = T)),2)
+
+#BCI - -0.16 , 0.74
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*-0.16) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.74) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
+
+#error - 0.xx ??
+round((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.27) + mean(GSH_df_full$LogMeanGSH, na.rm = T),2)
+```
+
+
+
+
 ### VIF check
 ```{r}
 library(car)
