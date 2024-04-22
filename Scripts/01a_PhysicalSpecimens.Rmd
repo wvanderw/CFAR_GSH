@@ -215,11 +215,15 @@ CFAR.df <- data.frame(x,y)
 
 CFAR.df
 
-img1 <- readPNG(here("Data","Input","Mako-281 (1).png"))
+img1 <- readPNG(here("Data","Input","Mako_light.png"))
 g1 <- rasterGrob(img1, interpolate = TRUE)
+img2 <- readPNG(here('Data','Input','Oxy-269.png'))
+g2 <- rasterGrob(img2, interpolate = TRUE)
+img3 <- readPNG(here("Data","Input","Apristurus_light.png"))
+g3 <- rasterGrob(img3, interpolate = TRUE)
 
-
-cfar.plot <- ggplot(data = CFAR.df, aes(x = x, y = y)) +
+#1
+cfar.plot.1 <- ggplot(data = CFAR.df, aes(x = x, y = y)) +
   geom_segment(x = 0.1, xend = 4.9, y = 0.1, yend = 0.1, size = 2) +
   geom_segment(x = 0.1, xend = 0.1, y = 0.1, yend = 4.9, size = 2) +
   geom_segment(x = 4.9, xend = 4.9, y = 0.1, yend = 4.9, size = 2) +
@@ -227,9 +231,10 @@ cfar.plot <- ggplot(data = CFAR.df, aes(x = x, y = y)) +
   xlim(0,5) +
   ylim(0,5) +
   annotation_custom(g1, xmin = -1, ymin = 0, xmax = 4, ymax = 5) +
-  annotate('text', x = 4.5, y = 2.5, label = 'h', size = 10, fontface = "italic", family = "serif") +
+  annotate('text', x = 4.25, y = 2.5, label = 'h', size = 10, fontface = "italic", family = "serif") +
+  geom_segment(x = 4.65, xend = 4.65, y = 0.2, yend = 4.8, size = 2, arrow = arrow(ends="both"), color = 'grey30') +
   annotate('text', x = 1.2, y = 2.5, label = 's', size = 10, fontface = "italic", family = "serif", color = 'white') +
-  annotate('text', x = 3, y = 1,  size = 8, fontface = "italic", family = "serif", parse = TRUE, label = "A==frac(italic(h^{2}), italic(s))") +
+  annotate('text', x = 3.25, y = 1,  size = 7, fontface = "italic", family = "serif", parse = TRUE, label = "A==~frac(italic(h^{2}), italic(s)) ==5.29") +
   theme(legend.position = "none",
         panel.grid = element_blank(),
         axis.title = element_blank(),
@@ -237,9 +242,59 @@ cfar.plot <- ggplot(data = CFAR.df, aes(x = x, y = y)) +
         axis.ticks = element_blank(),
         panel.background = element_blank())
 
-cfar.plot
+#2
 
-ggsave(here("Data","Output","cfar.plot.png"), cfar.plot, height = 10, width = 10, units = 'cm')
+cfar.plot.2 <- ggplot(data = CFAR.df, aes(x = x, y = y)) +
+  geom_segment(x = 0.1, xend = 3.3, y = 0.95, yend = 1, size = 2) +
+  geom_segment(x = 0.1, xend = 0.1, y = 0.95, yend = 4.15, size = 2) +
+  geom_segment(x = 3.3, xend = 3.3, y = 0.95, yend = 4.15, size = 2) +
+  geom_segment(x = 0.1, xend = 3.3, y = 4.15, yend = 4.15, size = 2) +
+  xlim(0,5) +
+  ylim(0,5) +
+  annotation_custom(g2, xmin = -1, ymin = 0, xmax = 4, ymax = 5) +
+  annotate('text', x = 3.5, y = 2.5, label = 'h', size = 10, fontface = "italic", family = "serif") +
+  annotate('text', x = 1.5, y = 2.5, label = 's', size = 10, fontface = "italic", family = "serif", color = 'white') +
+  annotate('text', x = 3.25, y = 0.5,  size = 7, fontface = "italic", family = "serif", parse = TRUE, label = "A==2.1") +
+  theme(legend.position = "none",
+        panel.grid = element_blank(),
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.background = element_blank())
+
+#3
+
+cfar.plot.3 <- ggplot(data = CFAR.df, aes(x = x, y = y)) +
+  geom_segment(x = 0.3, xend = 1.3, y = 1.9, yend = 1.9, size = 2) +
+  geom_segment(x = 0.3, xend = 0.3, y = 1.9, yend = 3, size = 2) +
+  geom_segment(x = 1.3, xend = 1.3, y = 1.9, yend = 3, size = 2) +
+  geom_segment(x = 0.3, xend = 1.3, y = 3, yend = 3, size = 2) +
+  geom_segment(x = 1.3, xend = 3.75, y = 3, yend = 3, size = 2, linetype = 'dashed', color = 'grey80', alpha = 0.5) +
+  xlim(0,5) +
+  ylim(0,5) +
+  annotation_custom(g3, xmin = 0.1, ymin = 0, xmax = 4, ymax = 5) +
+  annotate('text', x = 4.5, y = 2.5, label = 'h', size = 10, fontface = "italic", family = "serif") +
+  annotate('text', x = 1, y = 2.5, label = 's', size = 10, fontface = "italic", family = "serif", color = 'white') +
+  annotate('text', x = 3.25, y = 1,  size = 7, fontface = "italic", family = "serif", parse = TRUE, label = "A==0.39") +
+  theme(legend.position = "none",
+        panel.grid = element_blank(),
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.background = element_blank())
+
+
+
+ggsave(here("Data","Output","cfar.plot.1.png"), cfar.plot.1, height = 10, width = 10, units = 'cm')
+ggsave(here("Data","Output","cfar.plot.2.png"), cfar.plot.2, height = 10, width = 10, units = 'cm')
+ggsave(here("Data","Output","cfar.plot.3.png"), cfar.plot.3, height = 10, width = 10, units = 'cm')
+
+library(patchwork)
+Fig1 <- cfar.plot.1 + cfar.plot.2 + cfar.plot.3 + plot_annotation(tag_levels = "a")
+Fig1
+
+ggsave(here("Data","Output","Fig1_240321.png"), Fig1, height = 10, width = 30, units = 'cm')
+
 
 ```
 

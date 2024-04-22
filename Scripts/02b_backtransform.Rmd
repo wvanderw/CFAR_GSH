@@ -1,0 +1,102 @@
+---
+title: "02b_backtransform"
+author: "Wade VanderWright"
+date: "2023-10-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Can we write a function?
+```{r}
+back_transform <- function(x){
+  
+}
+```
+
+
+
+## Model 1 -- activity
+```{r}
+act.func <- function(x){
+  exp((sd(GSH_df_full$LogCFAR, na.rm = T)*x) + mean(GSH_df_full$LogCFAR, na.rm = T))
+}
+
+act.range <- act.func(c(-2:2))
+act.range
+
+#sd unit increase from mean to mean + 1SD
+act.range[4] - act.range[3]
+
+#intercept of model - 0.44
+int1 <- exp((0.44 * sd(GSH_df_full$LogMeanGSH)) + mean(GSH_df_full$LogMeanGSH))
+
+#sd unit size
+exp(sd(GSH_df_full$LogCFAR, na.rm = TRUE))
+# 1.84
+
+#slope of model - 0.37
+exp(0.37)
+# 48% increase
+
+out1 <- 0.44 + (0.37*1)
+
+exp((out1 * sd(GSH_df_full$LogMeanGSH)) + mean(GSH_df_full$LogMeanGSH)) - int1
+
+```
+
+
+## Model 2 -- size
+```{r}
+#int - 0.29
+int2 <- exp((0.29 * sd(GSH_df_full$LogMeanGSH)) + mean(GSH_df_full$LogMeanGSH))
+int2
+
+
+size.range <- size.func(c(-2:4))
+size.range
+size.range[4] - size.range[3]
+
+#slope - 0.32
+out2 <- 0.29 + (0.32*1)
+
+exp((out2 * sd(GSH_df_full$LogMeanGSH)) + mean(GSH_df_full$LogMeanGSH)) - int2
+```
+
+
+## Model 3 -- depth
+```{r}
+#int - 0.38
+int3 <- exp((0.38 * sd(GSH_df_full$LogMeanGSH)) + mean(GSH_df_full$LogMeanGSH))
+int3
+
+depth.labels
+
+#slope - -0.19
+out3 <- 0.38 + (-0.19*1)
+
+exp((out3 * sd(GSH_df_full$LogMeanGSH)) + mean(GSH_df_full$LogMeanGSH)) - int3
+
+
+```
+
+
+## Model 4 -- ecolife
+```{r}
+
+```
+
+
+
+## Model 5
+```{r}
+int5 <- exp((0.27 * sd(GSH_df_full$LogMeanGSH)) + mean(GSH_df_full$LogMeanGSH))
+int5
+
+out5 <- 0.27+(1.24)
+
+exp((out5* sd(GSH_df_full$LogMeanGSH)) + mean(GSH_df_full$LogMeanGSH)) - int5
+```
+

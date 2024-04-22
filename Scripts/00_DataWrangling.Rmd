@@ -40,6 +40,8 @@ library(car)
 library(rstan)
 library(gdata)
 library(bayesplot)
+library(grid)
+library(png)
 
 
 ##Preload functions
@@ -210,7 +212,7 @@ SampleFullTree <- drop.tip(SampleFullTree, namedrops$tree_not_data)
 #drop the species in the dataset that are not in the tree
 GSH_df_full <- subset(GSH_df, GSH_df$Binomial %nin% namedrops$data_not_tree) 
 
-#center the Log10 Max Size column
+#center the Log Max Size column
 GSH_df_full$LogMaxSize_centered <- center_scale(GSH_df_full$LogMaxSize)
 #force numeric
 GSH_df_full$LogMaxSize_centered <- as.numeric(GSH_df_full$LogMaxSize_centered)
@@ -232,6 +234,25 @@ target <- SampleFullTree$tip.label
 GSH_df_full <- GSH_df_full %>% 
   arrange(factor(GSH_df_full$Binomial, levels = target))
 
+
+#drop missing depth
+GSH_df_full <- GSH_df_full %>% drop_na(LogDepthMedian)
+
+
+#add in endothermy to 8 species
+GSH_df_full$endothermy <- 0
+
+endo.list <- c(445,449,451,452,453,454,455)
+
+GSH_df_full[endo.list,"Binomial"]
+
+GSH_df_full[endo.list, "endothermy"] <- 1
+
+GSH_df_full[c(444:455),c("Binomial",'endothermy')]
+
+GSH_df_full$endothermy <- as.factor(GSH_df_full$endothermy)
+
+class(GSH_df_full$endothermy)
 
 #covariance matrix (STAN)
 A <- ape::vcv.phylo(SampleFullTree, corr = TRUE)

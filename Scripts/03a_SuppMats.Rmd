@@ -1,0 +1,98 @@
+---
+title: "03a_SuppMats"
+author: "Wade VanderWright"
+date: "2023-10-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Step 1 - get a summed GSH (log , centered scaled)
+```{r}
+GSH_df_sum <- GSH_df_full %>%
+  rowwise() %>% 
+  mutate(SumGSH = sum(GS1_proportionTL, GS2_proportionTL, GS3_proportionTL, GS4_proportionTL, GS5_proportionTL, GS6_proportionTL, GS7_proportionTL, na.rm = TRUE),
+         LogSumGSH = log(SumGSH))
+
+GSH_df_sum$LogSumGSH_centered <- center_scale(GSH_df_sum$LogSumGSH)
+GSH_df_sum$LogSumGSH_centered <- as.numeric(GSH_df_sum$LogSumGSH_centered)
+```
+
+
+
+## Step 2 - run the ecolife model with summed GSH as the response
+```{r}
+brms_sum_prior <- get_prior(LogSumGSH_centered ~ LogCFAR_centered + LogMaxSize_centered + LogDepthMedian_centered + (1|gr(Binomial, cov = B)),
+                    data = GSH_df_sum,
+                    family = gaussian(),
+                    data2 = list(B = B))
+
+brms_sum <- brm(LogSumGSH_centered ~ LogCFAR_centered + LogMaxSize_centered + LogDepthMedian_centered + (1|gr(Binomial, cov = B)),
+                    data = GSH_df_sum,
+                    family = gaussian(),
+                    data2 = list(B = B),
+                    prior = brms_sum_prior,
+                    chains = 4, cores = 4,
+                    warmup = 1000, iter = 5000)
+
+summary(brms_sum)
+```
+
+
+```{r}
+Table_s6 <- data.frame(round(fixef(brms_sum, summary = TRUE), 2))
+
+write.csv(Table_s6, file = here('Data',"Output","SummedGSHModelOutput.csv"))
+```
+
+
+
+## Step 3 - compare model outputs
+nearly identical
+
+## Step 4 - plot 6 panels with six seven gills highlighted and threshers in CFARs
+```{r}
+hex_df <- GSH_df_sum[1:4,]
+
+thresh_df <- GSH_df_sum[c(444,449,450),]
+
+endo_df <- GSH_df_sum[c(endo.list),]
+
+
+plot_s2 <-  ggplot(aes(x = LogCFAR_centered, y = LogMeanGSH_centered), data = GSH_df_full) + geom_point(alpha = 0.25, size = 2) +
+  geom_point(aes(x = LogCFAR_centered, y = LogSumGSH_centered), data = hex_df, color = 'red', size = 2) +
+  geom_point(aes(x = LogCFAR_centered, y = LogSumGSH_centered), data = thresh_df, color = 'blue', size = 3) +
+  geom_point(aes(x = LogCFAR_centered, y = LogSumGSH_centered), data = endo_df, color = 'purple', size = 3) +
+  geom_segment(x = -0.17, xend = -0.17, y = 1.19, yend = 2.07) +
+  geom_segment(x = -0.10, xend = -0.10, y = 2.64, yend = 3.08) +
+  geom_segment(x = -0.42, xend = -0.42, y = 1.61, yend = 2.07) +
+  geom_segment(x = -0.17, xend = -0.17, y = 2.43, yend = 3.29) +
+  theme_bw()
+
+plot_s2
+
+ggsave(here("Data","Output","SuppFig_SixSevGill.png"), plot_s2, device = "png", width = 12, height = 10, units = 'cm')
+```
+
+```{r}
+library(patchwork)
+
+p1 <- plot(conditional_effects(brms_4, effects = "LogCFAR_centered"), points = TRUE)
+p2 <- plot(conditional_effects(brms_4, effects = "LogMaxSize_centered"), points = TRUE)
+p3 <- plot(conditional_effects(brms_4, effects = "LogDepthMedian_centered"), points = TRUE)
+
+
+
+p4 <- plot(conditional_effects(brms_sum, effects = "LogCFAR_centered"), points = TRUE)
+p5 <- plot(conditional_effects(brms_sum, effects = "LogMaxSize_centered"), points = TRUE)
+p6 <- plot(conditional_effects(brms_sum, effects = "LogDepthMedian_centered"), points = TRUE)
+
+p7 <- (p1[[1]] | p4[[1]]) / (p2[[1]] | p5[[1]]) / (p3[[1]] | p6[[1]])
+
+
+ggsave(here("Data","Output","Supp_ModelCompare.png"), p7, height = 30, width = 20, units = 'cm')
+```
+
+

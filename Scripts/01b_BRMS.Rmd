@@ -181,6 +181,56 @@ pp_check(brms_4)
 ```{r}
 plot(conditional_effects(brms_4), points = TRUE, ask = FALSE)
 ```
+```{r}
+plot(brms_4, N = 2, ask = FALSE)
+```
+
+
+
+## Model 5 - CFAR ~ GSH + MaxSize + Median Depth + Endothermy
+```{r}
+brms_5_prior <- get_prior(LogMeanGSH_centered ~ LogCFAR_centered + LogMaxSize_centered + LogDepthMedian_centered + endothermy + (1|gr(Binomial, cov = B)),
+                    data = GSH_df_full,
+                    family = gaussian(),
+                    data2 = list(B = B))
+
+brms_5 <- brm(LogMeanGSH_centered ~ LogCFAR_centered + LogMaxSize_centered + LogDepthMedian_centered + endothermy + (1|gr(Binomial, cov = B)),
+                    data = GSH_df_full,
+                    family = gaussian(),
+                    data2 = list(B = B),
+                    prior = brms_4_prior,
+                    chains = 4, cores = 4,
+                    warmup = 1000, iter = 5000)
+
+
+
+
+summary(brms_5)
+```
+```{r}
+plot(conditional_effects(brms_5), points = TRUE, ask = FALSE)
+
+```
+
+```{r}
+plot(brms_5, N=2, ask = FALSE)
+```
+
+
+
+```{r}
+plot(x = GSH_df_full$endothermy, y = exp(GSH_df_full$LogMeanGSH))
+```
+
+```{r}
+#lamda estimate
+hyp <- "sd_Binomial__Intercept^2 / (sd_Binomial__Intercept^2 + sigma^2) = 0"
+(hyp <- hypothesis(brms_5, hyp, class = NULL))
+plot(hyp)
+```
+
+
+
 ## R2 vals
 ```{r}
 bayes_R2(brms_1)
@@ -197,6 +247,12 @@ bayes_R2(brms_3)
 ```{r}
 bayes_R2(brms_4)
 ```
+
+```{r}
+bayes_R2(brms_5)
+```
+
+
 
 ## pp checks
 
@@ -227,15 +283,16 @@ fit1_loo <- loo(brms_1)
 fit2_loo <- loo(brms_2)
 fit3_loo <- loo(brms_3)
 fit4_loo <- loo(brms_4)
+fit5_loo <- loo(brms_5)
 
 
-brms_loo_phylo_list <- list(fit1_loo, fit2_loo, fit3_loo, fit4_loo)
+brms_loo_phylo_list <- list(fit1_loo, fit2_loo, fit3_loo, fit4_loo, fit5_loo)
 brms_loo_phylo <- loo_compare(brms_loo_phylo_list)
 loo_model_weights(brms_loo_phylo_list)
 
 LOO_Table <- data.frame(round(brms_loo_phylo, 2))
 
-write.csv(LOO_Table, file = here("./Data/Output/LOO_Table.csv"), row.names = T)
+write.csv(LOO_Table, file = here("./Data/Output/LOO_Table2.csv"), row.names = T)
 
 brms_loo_phylo
 ```
@@ -261,7 +318,7 @@ Table_5 <- rbind(tbl1_title,Table_1,
                  tbl3_title,Table_3,
                  tbl4_title,Table_4)
 
-write.csv(Table_5, file = here("./Data/Output/Model_summaries_230302.csv"))
+write.csv(Table_5, file = here("./Data/Output/Model_summaries_231007.csv"))
 Table_5
 ```
 
@@ -277,11 +334,11 @@ round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.44) + mean(GSH_df_full$LogMe
 
 #when x is 0
 round(mean(GSH_df_full$LogCFAR, na.rm = T),2)
-exp(mean(GSH_df_full$LogCFAR, na.rm = T) + sd(GSH_df_full$LogCFAR, na.rm = T)) - exp(mean(GSH_df_full$LogCFAR, na.rm = TRUE))
+exp(mean(GSH_df_full$LogCFAR, na.rm = T) + (sd(GSH_df_full$LogCFAR, na.rm = T)*0.37)) - exp(mean(GSH_df_full$LogCFAR, na.rm = TRUE))
 
 #BCI - -0.1 , 0.98
-round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.37) + mean(GSH_df_full$LogMeanGSH, na.rm = T))*100),2)
-round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.98) + mean(GSH_df_full$LogMeanGSH, na.rm = T))*100),2)
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*-0.09) + mean(GSH_df_full$LogMeanGSH, na.rm = T))*100),2)
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.96) + mean(GSH_df_full$LogMeanGSH, na.rm = T))*100),2)
 
 #error - 0.27
 round((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.27) + mean(GSH_df_full$LogMeanGSH, na.rm = T),2)
@@ -290,7 +347,7 @@ round((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.27) + mean(GSH_df_full$LogMeanGSH
 ```
 ```{r}
 #size of 1SD
-round(sd(GSH_df_full$LogCFAR, na.rm = T),2)
+round(exp(sd(GSH_df_full$LogCFAR, na.rm = T)),2)
 ```
 
 
@@ -317,7 +374,7 @@ round((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.27) + mean(GSH_df_full$LogMeanGSH
 ```{r}
 #size of 1SD
 #back transform intercept - 0.38
-round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.38) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*1.24) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
 
 #when x is 0
 round(mean(GSH_df_full$LogDepthMedian, na.rm = T),2)
@@ -340,15 +397,15 @@ round(sd(GSH_df_full$LogDepthMedian, na.rm = T),2)
 ```{r}
 #size of 1SD
 #back transform intercept - 0.29
-round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.29) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.37) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
 
 #when x is 0
 round(mean(GSH_df_full$LogCFAR, na.rm = T),2)
 round(exp(mean(GSH_df_full$LogCFAR, na.rm = T)),2)
 
 #BCI - -0.16 , 0.74
-round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*-0.16) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
-round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.74) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*-0.15) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
+round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.71) + mean(GSH_df_full$LogMeanGSH, na.rm = T)) * 100),2)
 
 #error - 0.xx ??
 round((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.27) + mean(GSH_df_full$LogMeanGSH, na.rm = T),2)
@@ -383,6 +440,7 @@ saveRDS(brms_1, here("Data", "Output", "brms_1.rds"))
 saveRDS(brms_2, here("Data", "Output", "brms_2.rds"))
 saveRDS(brms_3, here("Data", "Output", "brms_3.rds"))
 saveRDS(brms_4, here("Data", "Output", "brms_4.rds"))
+saveRDS(brms_5, here("Data", "Output", "brms_5.rds"))
 ```
 
 
