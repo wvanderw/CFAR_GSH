@@ -17,12 +17,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Model 1 - GSH ~ CFAR
 
 ```{r}
+# get uninformative priors
 brms_1_prior <- get_prior(LogMeanGSH_centered ~ LogCFAR_centered + (1|gr(Binomial, cov = B)),
                     data = GSH_df_full,
                     data2 = list(B = B),
                     family = gaussian())
 
-
+# run 
 brms_1 <- brm(LogMeanGSH_centered ~ LogCFAR_centered + (1|gr(Binomial, cov = B)),
                     data = GSH_df_full,
                     data2 = list(B = B),
@@ -36,11 +37,13 @@ summary(brms_1)
 ```
 
 ```{r}
+#visual check
 plot(conditional_effects(brms_1), points = TRUE)
 
 ```
 
 ```{r}
+#visual check 2
 plot(brms_1, N=2, ask = F)
 
 ```
@@ -106,7 +109,7 @@ brms_3_prior <- get_prior(LogMeanGSH_centered ~ LogDepthMedian_centered + (1|gr(
                     family = gaussian(),
                     data2 = list(B = B))
 
-#run time was about 30 minutes
+#run time was about 30 minutes the first time
 brms_3 <- brm(LogMeanGSH_centered ~ LogDepthMedian_centered + (1|gr(Binomial, cov = B)),
                     data = GSH_df_full,
                     family = gaussian(),
@@ -409,24 +412,6 @@ round((exp((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.71) + mean(GSH_df_full$LogMe
 
 #error - 0.xx ??
 round((sd(GSH_df_full$LogMeanGSH, na.rm = T)*0.27) + mean(GSH_df_full$LogMeanGSH, na.rm = T),2)
-```
-
-
-
-
-### VIF check
-```{r}
-library(car)
-
-linear_mod <- lm(Log10MeanGSH_centered ~ Log10CFAR_centered + Log10MaxSize_centered + Log10DepthMedian_centered, data = GSH_df_pgls)
-
-vif(linear_mod)
-```
-
-```{r}
-data <- GSH_df_pgls[,c("Log10MeanGSH_centered", "Log10CFAR_centered", "Log10MaxSize_centered", "Log10DepthMedian_centered")]
-
-cor(data)
 ```
 
 

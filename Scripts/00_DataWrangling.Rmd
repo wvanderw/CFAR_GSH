@@ -59,8 +59,7 @@ center_scale <- function(x){
   scale(x, center = mean(x), scale = TRUE)
 }
 
-#Run this and skip to line 348
-#load(here('./Data/Output/CurrentDataState.RData'))
+
 
 
 ```
@@ -74,7 +73,7 @@ getwd()
 
 # SotW GSH Data ####
 GSH_df <- read.csv(here('Data', 'Input', 'SharkGillSlitActivity210331 - Sheet1.csv'), header = T)
-#drop NAs
+#drop NAs in gill slit 1 column
 GSH_df <- GSH_df %>% drop_na(GS1_proportionTL)
 #create binomial
 GSH_df <- GSH_df %>% 
@@ -95,7 +94,7 @@ GSH_df <- GSH_df %>%
   mutate("CaudalAspect_proportion_TL" = caudal_fin(TailHeight_proportionTL, TailArea_proportionTL)) %>% 
   mutate(LogMeanGSH = log(MeanGSH)) %>% 
   mutate(LogCFAR = log(CaudalAspect_proportion_TL))
-#update taxonomy to match
+#update taxonomy to match current state
 GSH_df[(GSH_df$Binomial == 'Deania_quadrispinosum'), 'Binomial'] <- 'Deania_quadrispinosa'
 GSH_df[(GSH_df$Binomial == 'Ctenacis_fehlmani'), 'Binomial'] <- 'Ctenacis_fehlmanni' 
 GSH_df[(GSH_df$Binomial == 'Hemitriakis_leucoperitera'), 'Binomial'] <- 'Hemitriakis_leucoperiptera'
@@ -104,60 +103,12 @@ GSH_df[(GSH_df$Binomial == 'Carcharhinus_perezi'), 'Binomial'] <- 'Carcharhinus_
 GSH_df[(GSH_df$Binomial == 'Chiloscyllium_hasselti'), 'Binomial'] <- 'Chiloscyllium_hasseltii'
 
 
-# Cal Acad GSH and CFAR Data####
-#load data
-CalAcad <- read.csv(here('Data', 'Input', 'CalCFAR.csv'), header = T)
-#create binomial column
-CalAcad <- CalAcad %>% 
-  rowwise() %>% 
-  mutate(Binomial = paste(LikelyGenus, LikelySpecies, sep = '_'))
-#drop NA values from unknown species and specimens without tails
-CalAcad <- CalAcad %>% 
-  drop_na(Binomial, CFAR)
-
-CalAcad <- CalAcad[-7,]
-#fix typos
-CalAcad[(CalAcad$Binomial == 'Notorhynchus cepedianus_NA'), "Binomial"] <- 'Notorhynchus_cepedianus'
-CalAcad[(CalAcad$Binomial == 'Hexanchus_griseus?'), "Binomial"] <- 'Hexanchus_griseus'
-#create proportional GSH to compare to drawings
-CalAcad <- CalAcad %>% 
-  rowwise() %>% 
-  mutate(MeanGSH_left = mean(na.omit(c(LGS1, LGS2, LGS3, LGS4, LGS5, LGS6, LGS7))),
-         MeanGSH_right = mean(na.omit(c(RGS1, RGS2, RGS3, RGS4, RGS5, RGS6, RGS7))),
-         MeanGSH_all = mean(na.omit(c(MeanGSH_left, MeanGSH_right))),
-         MeanGSHPropTL = MeanGSH_all/Total_length_cm)
 
 
-#physical specimens Data from last paper (GSH only)####
-VW_2020 <- read.csv(here('Data', 'Input', 'CLEAN_GSH_Data_20190402.csv'), header = T)
-#create binomial
-VW_2020 <- VW_2020 %>% 
-  rowwise() %>% 
-  mutate(Binomial = paste(Genus, Species, sep = '_'))
-#create mean GSH values
-VW_2020 <- VW_2020 %>% 
-  group_by(SampleID) %>% 
-  mutate(MeanGSH_all = mean(na.omit(c(GillSlitHeightCM_Arch1, GillSlitHeightCM_Arch2,
-                                      GillSlitHeightCM_Arch3,GillSlitHeightCM_Arch4,
-                                      GillSlitHeightCM_Arch5))),
-         MeanGSHPropTL = (MeanGSH_all/TLcm))
-#remove duplicates
-VW_2020 <- VW_2020 %>% 
-  distinct(SampleID, .keep_all = T)
-#select and stitch together useful columns
-#binomial, MeanGSH_all, MeanGSHPropTL, CFAR
-CalAcad <- CalAcad[,c(39,42,43,38)]
-#binomial, MeanGSH_all, MeanGSHPropTL
-VW_2020 <- VW_2020[,c(17,18,19)]
-#fill blank for CFAR
-VW_2020$CFAR <- NA
-#stitch
-PhysSpec <- rbind(CalAcad,VW_2020)
-
-# Depth and habitat Data####
+## Depth and habitat Data ####
 #load data
 Habitat <- read_excel(here('./Data/Input/Habitat_species_corrected_210512.xlsx'), sheet = "Current")
-#update taxonomy to match
+#update taxonomy to match current state
 Habitat[(Habitat$Genus_species == 'Carcharhinus_perezi'), 'Genus_species'] <- 'Carcharhinus_perezii'
 Habitat[(Habitat$Genus_species == 'Chiloscyllium_hasselti'), 'Genus_species'] <- 'Chiloscyllium_hasseltii'
 #filter to match species
@@ -169,36 +120,52 @@ Habitat <- Habitat %>%
 #save missing species for later
 missing.habitat <- GSH_df[(GSH_df$Binomial %nin% Habitat$Genus_species),]
 #trim unused columns from habitat sheet
-Habitat <- Habitat[,c(10,22,23,29,31,33,34)]
+Habitat <- Habitat[,c(10,22,23,33,34)]
 #join dataframes
 GSH_df <- left_join(GSH_df, Habitat, by = c('Binomial' = 'Genus_species'))
-GSH_df$MaxLinearDimension <- as.numeric(GSH_df$MaxLinearDimension)
-GSH_df$DepthMax_m_text <- as.numeric(GSH_df$DepthMax_m_text)
-GSH_df$LogDepthMax <- log(GSH_df$DepthMax_m_text)
-GSH_df$DepthMin_m_text <- as.numeric(GSH_df$DepthMin_m_text)
-GSH_df$LogDepthMin <- log(GSH_df$DepthMin_m_text)
-GSH_df$LogDepthMax[which(GSH_df$LogDepthMax == -Inf)] = 0
-GSH_df$LogDepthMin[which(GSH_df$LogDepthMin == -Inf)] = 0
+GSH_df$MaxLinearDimension <- as.numeric(GSH_df$MaxLinearDimension) #force numerics
+GSH_df$DepthMax_m_text <- as.numeric(GSH_df$DepthMax_m_text) #force numerics
+GSH_df$LogDepthMax <- log(GSH_df$DepthMax_m_text) # log max depth
+GSH_df$DepthMin_m_text <- as.numeric(GSH_df$DepthMin_m_text) # force numerics
+GSH_df$LogDepthMin <- log(GSH_df$DepthMin_m_text) # log min depth
+GSH_df$LogDepthMax[which(GSH_df$LogDepthMax == -Inf)] = 0 # fix log of zero errors by assigning 0
+GSH_df$LogDepthMin[which(GSH_df$LogDepthMin == -Inf)] = 0 # fix log of zero errors by assigning 0
 
 #Log the maximum size column
 GSH_df <- GSH_df %>% 
   rowwise() %>% 
   mutate(LogMaxSize = log(MaxLinearDimension),
-         MedianDepth_m = mean(c(DepthMin_m_text, DepthMax_m_text)),
-         LogDepthMedian = mean(c(LogDepthMax, LogDepthMin)))
+         MedianDepth_m = mean(c(DepthMin_m_text, DepthMax_m_text)), #create median depth (mean of two points)
+         LogDepthMedian = mean(c(LogDepthMax, LogDepthMin))) # Log the new median depth
 #center the Log10 Mean GSH column
 GSH_df$LogMeanGSH_centered <- center_scale(GSH_df$LogMeanGSH)
 #force numeric
 GSH_df$LogMeanGSH_centered <- as.numeric(GSH_df$LogMeanGSH_centered)
-#center scale depths
+#center scale depths (max , min, median)
 GSH_df$LogDepthMax_centered <- (GSH_df$LogDepthMax - mean(GSH_df$LogDepthMax, na.rm = TRUE)) / sd(GSH_df$Log10DepthMax, na.rm = TRUE)
 GSH_df$LogDepthMin_centered <- (GSH_df$LogDepthMin - mean(GSH_df$LogDepthMin, na.rm = TRUE)) / sd(GSH_df$Log10DepthMin, na.rm = TRUE)
 GSH_df$LogDepthMedian_centered <- (GSH_df$LogDepthMedian - mean(GSH_df$LogDepthMedian, na.rm = TRUE)) / sd(GSH_df$LogDepthMedian, na.rm = TRUE)
 
+#center the Log Max Size column
+GSH_df$LogMaxSize_centered <- center_scale(GSH_df$LogMaxSize)
+#force numeric
+GSH_df$LogMaxSize_centered <- as.numeric(GSH_df$LogMaxSize_centered)
+
+
+#center the Log CFAR column
+GSH_df$LogCFAR_centered <- center_scale(GSH_df$LogCFAR)
+#force numeric
+GSH_df$LogCFAR_centered <- as.numeric(GSH_df$LogCFAR_centered)
+
+```
+
+
+## Phylogenetic tree for all Chondrichthyans
+```{r}
 ###Phylo Data####
-#read in the 10000 trees
+#read in the 10000 trees of all chondrichthyans
 FullTree <- read.nexus(here('./Data/Input/10.cal.tree.nex'))
-#se the seed for reproduciblility
+#set the seed for reproduciblility
 set.seed(11)
 #sample out a tree
 SampleFullTree <- sample(FullTree, 1)
@@ -212,21 +179,8 @@ SampleFullTree <- drop.tip(SampleFullTree, namedrops$tree_not_data)
 #drop the species in the dataset that are not in the tree
 GSH_df_full <- subset(GSH_df, GSH_df$Binomial %nin% namedrops$data_not_tree) 
 
-#center the Log Max Size column
-GSH_df_full$LogMaxSize_centered <- center_scale(GSH_df_full$LogMaxSize)
-#force numeric
-GSH_df_full$LogMaxSize_centered <- as.numeric(GSH_df_full$LogMaxSize_centered)
 
 
-#center the Log10 CFAR column
-GSH_df_full$LogCFAR_centered <- center_scale(GSH_df_full$LogCFAR)
-#force numeric
-GSH_df_full$LogCFAR_centered <- as.numeric(GSH_df_full$LogCFAR_centered)
-
-#change habitats to factor
-GSH_df_full$PrimaryHabitat <- as.factor(GSH_df_full$PrimaryHabitat)
-#add contrast structure
-contrasts(GSH_df_full$PrimaryHabitat) = contr.treatment(3)
 
 #order dataframe to match tree tip labels
 target <- SampleFullTree$tip.label
@@ -239,7 +193,7 @@ GSH_df_full <- GSH_df_full %>%
 GSH_df_full <- GSH_df_full %>% drop_na(LogDepthMedian)
 
 
-#add in endothermy to 8 species
+#add in endothermy to 8 species 
 GSH_df_full$endothermy <- 0
 
 endo.list <- c(445,449,451,452,453,454,455)
@@ -252,9 +206,9 @@ GSH_df_full[c(444:455),c("Binomial",'endothermy')]
 
 GSH_df_full$endothermy <- as.factor(GSH_df_full$endothermy)
 
-class(GSH_df_full$endothermy)
 
-#covariance matrix (STAN)
+
+#covariance matrix (STAN) *NOT USED*
 A <- ape::vcv.phylo(SampleFullTree, corr = TRUE)
 #(BRMS)
 B <- ape::vcv(SampleFullTree, corr = TRUE)
@@ -262,13 +216,9 @@ B <- ape::vcv(SampleFullTree, corr = TRUE)
 
 ```
 
-## Plot the Tree
+## Phylogenetic tree for sequenced species
 ```{r}
-plot(SampleFullTree, type = 'fan', show.tip=F, edge.color = rainbow(1200))
-```
-
-```{r}
-###Phylo Data####
+###Phylo Data for sequnced species only####
 #read in the 10000 trees
 SeqTree <- read.nexus(here('./Data/Input/output.nex'))
 #se the seed for reproduciblility
@@ -284,21 +234,7 @@ SampleSeqTree <- drop.tip(SampleSeqTree, namedrops$tree_not_data)
 #drop the species in the dataset that are not in the tree
 GSH_df_seq <- subset(GSH_df, GSH_df$Binomial %nin% namedrops$data_not_tree) 
 
-#center the Log10 Max Size column
-GSH_df_seq$LogMaxSize_centered <- center_scale(GSH_df_seq$LogMaxSize)
-#force numeric
-GSH_df_seq$LogMaxSize_centered <- as.numeric(GSH_df_seq$LogMaxSize_centered)
 
-
-#center the Log10 CFAR column
-GSH_df_seq$LogCFAR_centered <- center_scale(GSH_df_seq$LogCFAR)
-#force numeric
-GSH_df_seq$LogCFAR_centered <- as.numeric(GSH_df_seq$LogCFAR_centered)
-
-#change habitats to factor
-GSH_df_seq$PrimaryHabitat <- as.factor(GSH_df_seq$PrimaryHabitat)
-#add contrast structure
-contrasts(GSH_df_seq$PrimaryHabitat) = contr.treatment(3)
 
 #order dataframe to match tree tip labels
 target <- SampleSeqTree$tip.label
@@ -315,7 +251,3 @@ D <- ape::vcv(SampleSeqTree, corr = TRUE)
 
 ```
 
-## Plot the Tree
-```{r}
-plot(SampleSeqTree, type = 'fan', show.tip=F, edge.color = rainbow(700))
-```

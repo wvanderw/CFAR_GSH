@@ -331,20 +331,7 @@ round((exp((sd(GSH_df_seq$LogMeanGSH, na.rm = T)*0.9) + mean(GSH_df_seq$LogMeanG
 
 
 
-### VIF check
-```{r}
-library(car)
 
-linear_mod <- lm(LogMeanGSH_centered ~ LogCFAR_centered + LogMaxSize_centered + LogDepthMedian_centered, data = GSH_df_seq)
-
-vif(linear_mod)
-```
-
-```{r}
-data <- GSH_df_seq[,c("LogMeanGSH_centered", "LogCFAR_centered", "LogMaxSize_centered", "LogDepthMedian_centered")]
-
-cor(data)
-```
 
 
 
@@ -357,18 +344,5 @@ saveRDS(brms_5, here("Data", "Output", "brms_5.rds"))
 saveRDS(brms_6, here("Data", "Output", "brms_6.rds"))
 saveRDS(brms_7, here("Data", "Output", "brms_7.rds"))
 saveRDS(brms_8, here("Data", "Output", "brms_8.rds"))
-```
-
-
-```{r}
-brms_Check <- brm(LogMeanGSH_centered ~ LogCFAR_centered + (1|gr(Binomial, cov = D)),
-                    data = GSH_df_seq,
-                    data2 = list(D = D),
-                    family = gaussian(),
-                    prior = brms_5_prior,
-                    sample_prior = "only"
-                    )
-
-pp_check(brms_Check)
 ```
 
